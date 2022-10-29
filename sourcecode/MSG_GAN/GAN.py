@@ -39,28 +39,29 @@ class Generator(th.nn.Module):
 
         # register the modules required for the GAN Below ...
         # create the ToRGB layers for various outputs:
-        def to_rgb(in_channels):
+        
+        def to_flow(in_channels):
             return Conv2d(in_channels, 3, (1, 1), bias=True)
 
         # create a module list of the other required general convolution blocks
         self.layers = ModuleList([GenInitialBlock(self.latent_size)])
-        self.rgb_converters = ModuleList([to_rgb(self.latent_size)])
-
+        self.flow_converters = ModuleList([to_flow(self.latent_size)])
+        #TODO: rename all rgb to flow (flow_converters, to_rgb)
         # create the remaining layers
         for i in range(self.depth - 1):
             if i <= 2:
                 layer = GenGeneralConvBlock(self.latent_size, self.latent_size,
                                             dilation=dilation)
-                rgb = to_rgb(self.latent_size)
+                rgb = to_flow(self.latent_size)
             else:
                 layer = GenGeneralConvBlock(
                     int(self.latent_size // np.power(2, i - 3)),
                     int(self.latent_size // np.power(2, i - 2)),
                     dilation=dilation
                 )
-                rgb = to_rgb(int(self.latent_size // np.power(2, i - 2)))
+                rgb = to_flow(int(self.latent_size // np.power(2, i - 2)))
             self.layers.append(layer)
-            self.rgb_converters.append(rgb)
+            self.flow_converters.append(rgb)
 
         # if spectral normalization is on:
         if use_spectral_norm:
@@ -114,13 +115,13 @@ class Generator(th.nn.Module):
         outputs = []  # initialize to empty list
 
         y = x  # start the computational pipeline
-        for block, converter in zip(self.layers, self.rgb_converters):
+        for block, converter in zip(self.layers, self.flow_converters):
             y = block(y)
             outputs.append(tanh(converter(y)))
 
         return outputs
 
-
+'''
 class Discriminator(th.nn.Module):
     """ Discriminator of the GAN """
 
@@ -246,7 +247,38 @@ class Discriminator(th.nn.Module):
             y = block(y)  # apply the block
 
         return y
+'''
+# from consingan
+class ConvBlock(th.nn.Sequential):
+    def __init__(self, in_channel, out_channel, ker_size, padd, batch_norm=True, generator=False):
+        super(ConvBlock,self).__init__()
+        self.add_module('conv', th.nn.Conv2d(in_channel, out_channel, kernel_size=ker_size, stride=1, padding=padd))
+        if generator and batch_norm:
+            self.add_module('norm', th.nn.BatchNorm2d(out_channel))
+        # self.add_module(opt.activation, get_activation(opt))
+        self.add_module('lrelu', th.nn.LeakyReLU(0.2, inplace=True))
+class Discriminator(th.nn.Module):
+    def __init__(self, latent_size=64,ker_size=3,padd_size=0,
+                 num_layer=3,):
+        super(Discriminator, self).__init__()
 
+        # self.opt = opt
+        N = int(latent_size)
+
+        self.head = ConvBlock(3, N, ker_size, padd_size)
+
+        self.body = th.nn.Sequential()
+        for i in range(num_layer):
+            block = ConvBlock(N, N, ker_size, padd_size)
+            self.body.add_module('block%d'%(i),block)
+
+        self.tail = th.nn.Conv2d(N, 1, kernel_size=ker_size, padding=padd_size)
+
+    def forward(self,x):
+        head = self.head(x)
+        body = self.body(head)
+        out = self.tail(body)
+        return out
 
 class MSG_GAN:
     """ Unconditional TeacherGAN

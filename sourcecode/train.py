@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import torch as th
 from torch.backends import cudnn
-
+TODO = None
 # define the device for the training script
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 
@@ -58,9 +58,10 @@ def parse_arguments():
     parser.add_argument("--loss_function", action="store", type=str,
                         default="relativistic-hinge",
                         help="loss function to be used: 'hinge', 'relativistic-hinge'")
-
+    # depth:
+    # {4:32,5:64,6:128,7:256}
     parser.add_argument("--depth", action="store", type=int,
-                        default=5,
+                        default=7,
                         help="Depth of the GAN")
 
     parser.add_argument("--latent_size", action="store", type=int,
@@ -68,7 +69,7 @@ def parse_arguments():
                         help="latent size for the generator")
 
     parser.add_argument("--batch_size", action="store", type=int,
-                        default=32,
+                        default=1,
                         help="batch_size for training")
 
     parser.add_argument("--start", action="store", type=int,
@@ -84,7 +85,7 @@ def parse_arguments():
                         help="number of logs to generate per epoch")
 
     parser.add_argument("--num_samples", action="store", type=int,
-                        default=64,
+                        default=1,
                         help="number of samples to generate for creating the grid" +
                              " should be a square number preferably")
 
@@ -145,17 +146,19 @@ def main(args):
     from MSG_GAN.Losses import HingeGAN, RelativisticAverageHingeGAN, \
         StandardGAN, LSGAN
 
-    # create a data source:
-    data_source = FlatDirectoryImageDataset if not args.folder_distributed \
-        else FoldersDistributedDataset
+    if 'dataset':
+        assert TODO,'change this to a single image':
+        # create a data source:
+        data_source = FlatDirectoryImageDataset if not args.folder_distributed \
+            else FoldersDistributedDataset
 
-    dataset = data_source(
-        args.images_dir,
-        transform=get_transform((int(np.power(2, args.depth + 1)),
-                                 int(np.power(2, args.depth + 1)))))
+        dataset = data_source(
+            args.images_dir,
+            transform=get_transform((int(np.power(2, args.depth + 1)),
+                                    int(np.power(2, args.depth + 1)))))
 
-    data = get_data_loader(dataset, args.batch_size, args.num_workers)
-    print("Total number of images in the dataset:", len(dataset))
+        data = get_data_loader(dataset, args.batch_size, args.num_workers)
+        print("Total number of images in the dataset:", len(dataset))
 
     # create a gan from these
     msg_gan = MSG_GAN(depth=args.depth,
@@ -207,7 +210,7 @@ def main(args):
 
     # train the GAN
     msg_gan.train(
-        data,
+    data,
         gen_optim,
         dis_optim,
         loss_fn=loss(device, msg_gan.dis),
