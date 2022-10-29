@@ -81,7 +81,7 @@ class GenGeneralConvBlock(th.nn.Module):
 
         return y
 
-
+'''
 class MinibatchStdDev(th.nn.Module):
     def __init__(self, averaging='all'):
         """
@@ -235,3 +235,4 @@ class DisGeneralConvBlock(th.nn.Module):
         y = self.downSampler(y)
 
         return y
+'''
