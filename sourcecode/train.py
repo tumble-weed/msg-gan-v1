@@ -17,10 +17,11 @@ cudnn.benchmark = True
 # set seed = 3
 th.manual_seed(seed=3)
 
-assert TODO,'transform or transforms?'
-im_to_tensor = torchvision.transform.Compose([
-    torchvision.transform.ToTensor(),
-    torchvision.transform.Resize(256),
+
+im_to_tensor = torchvision.transforms.Compose([
+    torchvision.transforms.Resize(256),
+    torchvision.transforms.ToTensor(),
+    torchvision.transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
 ])
 def parse_arguments():
     """
@@ -153,6 +154,7 @@ def main(args):
     from MSG_GAN.GAN import MSG_GAN
     from data_processing.DataLoader import FlatDirectoryImageDataset, \
         get_transform, get_data_loader, FoldersDistributedDataset
+    from data_processing.DataLoader import DummyDataLoader
     from MSG_GAN.Losses import HingeGAN, RelativisticAverageHingeGAN, \
         StandardGAN, LSGAN
 
@@ -163,7 +165,13 @@ def main(args):
         ref = im_to_tensor(im_pil)
         assert ref.ndim == 3
         ref = ref.unsqueeze(0)
-    if 'dataset':
+        ref = ref.to(device)
+        # def data():
+        #     yield ref
+        
+        data = DummyDataLoader(ref)
+        print("Total number of images in the dataset:", len(dataset))
+    if 'dataset' and False:
         assert TODO,'change this to a single image':
         # create a data source:
         data_source = FlatDirectoryImageDataset if not args.folder_distributed \

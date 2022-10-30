@@ -181,3 +181,17 @@ def get_data_loader(dataset, batch_size, num_workers):
     )
 
     return dl
+
+class DummyDataLoader():
+    def __init__(self,ref,length):
+        self.ref = ref
+        self.length = length
+        self.counter = 0
+    def __iter__(self):
+        return self
+    def __len__(self):
+        retrn self.length
+    def __next__(self):
+        if self.counter < self.length:
+            self.counter += 1
+            return self.ref
