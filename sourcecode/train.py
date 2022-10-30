@@ -5,6 +5,8 @@ import argparse
 import numpy as np
 import torch as th
 from torch.backends import cudnn
+import skimage.io
+from PIL import Image
 TODO = None
 # define the device for the training script
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
@@ -15,7 +17,11 @@ cudnn.benchmark = True
 # set seed = 3
 th.manual_seed(seed=3)
 
-
+assert TODO,'transform or transforms?'
+im_to_tensor = torchvision.transform.Compose([
+    torchvision.transform.ToTensor(),
+    torchvision.transform.Resize(256),
+])
 def parse_arguments():
     """
     command line arguments parser
@@ -128,6 +134,10 @@ def parse_arguments():
     parser.add_argument("--num_workers", action="store", type=int,
                         default=3,
                         help="number of parallel workers for reading files")
+    
+    parser.add_argument("--image_path", action="store", type=str,
+                        default=None,
+                        help="path to the image to reconstruct")
 
     args = parser.parse_args()
 
@@ -146,6 +156,13 @@ def main(args):
     from MSG_GAN.Losses import HingeGAN, RelativisticAverageHingeGAN, \
         StandardGAN, LSGAN
 
+    if 'read image':
+        im = skimage.io.imread(args.image_path)
+        assert TODO,'fromarray'
+        im_pil = Image.fromarray(im)
+        ref = im_to_tensor(im_pil)
+        assert ref.ndim == 3
+        ref = ref.unsqueeze(0)
     if 'dataset':
         assert TODO,'change this to a single image':
         # create a data source:
