@@ -214,8 +214,12 @@ def main(args):
     # create optimizer for generator:
     gen_optim = th.optim.Adam(msg_gan.gen.parameters(), args.g_lr,
                               [args.adam_beta1, args.adam_beta2])
-
+    '''
     dis_optim = th.optim.Adam(msg_gan.dis.parameters(), args.d_lr,
+                              [args.adam_beta1, args.adam_beta2])
+    '''
+    import itertools
+    dis_optim = th.optim.Adam(itertools.chain(*[dis.parameters() for dis in  msg_gan.dis_list]), args.d_lr,
                               [args.adam_beta1, args.adam_beta2])
 
     if args.generator_optim_file is not None:
