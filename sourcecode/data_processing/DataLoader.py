@@ -190,7 +190,7 @@ class DummyDataLoader():
     def __iter__(self):
         return self
     def __len__(self):
-        retrn self.length
+        return self.length
     def __next__(self):
         if self.counter < self.length:
             self.counter += 1

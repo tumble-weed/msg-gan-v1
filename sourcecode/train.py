@@ -7,6 +7,7 @@ import torch as th
 from torch.backends import cudnn
 import skimage.io
 from PIL import Image
+import torchvision
 TODO = None
 # define the device for the training script
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
@@ -172,7 +173,7 @@ def main(args):
         data = DummyDataLoader(ref)
         print("Total number of images in the dataset:", len(dataset))
     if 'dataset' and False:
-        assert TODO,'change this to a single image':
+        assert TODO,'change this to a single image'
         # create a data source:
         data_source = FlatDirectoryImageDataset if not args.folder_distributed \
             else FoldersDistributedDataset
