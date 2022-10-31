@@ -138,7 +138,7 @@ def parse_arguments():
                         help="number of parallel workers for reading files")
     
     parser.add_argument("--image_path", action="store", type=str,
-                        default=None,
+                        default="../images/cars.png",
                         help="path to the image to reconstruct")
 
     args = parser.parse_args()
@@ -161,7 +161,7 @@ def main(args):
 
     if 'read image':
         im = skimage.io.imread(args.image_path)
-        assert TODO,'fromarray'
+        # assert TODO,'fromarray'
         im_pil = Image.fromarray(im)
         ref = im_to_tensor(im_pil)
         assert ref.ndim == 3
