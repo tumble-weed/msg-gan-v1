@@ -14,9 +14,9 @@ class GANLoss:
     Note that the gen_loss also has
     """
 
-    def __init__(self, device, dis):
+    def __init__(self, device, dis_list):
         self.device = device
-        self.dis = dis
+        self.dis_list = dis_list
 
     def dis_loss(self, real_samps, fake_samps):
         raise NotImplementedError("dis_loss method has not been implemented")
@@ -114,30 +114,35 @@ class HingeGAN(GANLoss):
 
 class RelativisticAverageHingeGAN(GANLoss):
 
-    def __init__(self, device, dis):
-        super().__init__(device, dis)
+    def __init__(self, device, dis_list):
+        super().__init__(device, dis_list)
 
     def dis_loss(self, real_samps, fake_samps):
-        # difference between real and fake:
-        r_f_diff = self.dis(real_samps) - th.mean(self.dis(fake_samps))
+        total_loss = 0
+        for fake_samp,real_samp,dis in zip(fake_samps,real_samps,self.dis_list):
+            # difference between real and fake:
+            r_f_diff = dis(real_samp) - th.mean(dis(fake_samp))
 
-        # difference between fake and real samples
-        f_r_diff = self.dis(fake_samps) - th.mean(self.dis(real_samps))
-
-        # return the loss
-        return (th.mean(th.nn.ReLU()(1 - r_f_diff))
+            # difference between fake and real samples
+            f_r_diff = dis(fake_samp) - th.mean(dis(real_samp))
+            scale_loss = (th.mean(th.nn.ReLU()(1 - r_f_diff))
                 + th.mean(th.nn.ReLU()(1 + f_r_diff)))
+            # return the loss
+            total_loss += scale_loss
+        return total_loss
 
     def gen_loss(self, real_samps, fake_samps):
-        # difference between real and fake:
-        r_f_diff = self.dis(real_samps) - th.mean(self.dis(fake_samps))
-
-        # difference between fake and real samples
-        f_r_diff = self.dis(fake_samps) - th.mean(self.dis(real_samps))
-
-        # return the loss
-        return (th.mean(th.nn.ReLU()(1 + r_f_diff))
-                + th.mean(th.nn.ReLU()(1 - f_r_diff)))
+        total_loss = 0
+        for fake_samp,real_samp,dis in zip(fake_samps,real_samps,self.dis_list):
+            # difference between real and fake:
+            r_f_diff = dis(real_samp) - th.mean(dis(fake_samp))
+            # difference between fake and real samples
+            f_r_diff = dis(fake_samp) - th.mean(dis(real_samp))
+            scale_loss = (th.mean(th.nn.ReLU()(1 + r_f_diff))
+                    + th.mean(th.nn.ReLU()(1 - f_r_diff)))
+            # return the loss
+            total_loss += scale_loss 
+        return total_loss
 
     def conditional_dis_loss(self, real_samps, fake_samps, conditional_vectors):
         # difference between real and fake:
