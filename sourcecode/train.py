@@ -173,8 +173,8 @@ def main(args):
         # def data():
         #     yield ref
         
-        data = DummyDataLoader(ref)
-        print("Total number of images in the dataset:", len(dataset))
+        data = DummyDataLoader(ref,100)
+        # print("Total number of images in the dataset:", len(dataset))
     if 'dataset' and False:
         assert TODO,'change this to a single image'
         # create a data source:
