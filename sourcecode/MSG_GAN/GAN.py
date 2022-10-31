@@ -297,16 +297,20 @@ class MSG_GAN:
                  dis_dilation=1, use_spectral_norm=True, device=th.device("cpu")):
         """ constructor for the class """
         from torch.nn import DataParallel
-
+        self.min_scale = 3
         self.gen = Generator(depth, latent_size, dilation=gen_dilation,
                              use_spectral_norm=use_spectral_norm).to(device)
-        self.dis = Discriminator(depth, latent_size, dilation=dis_dilation,
-                                 use_spectral_norm=use_spectral_norm).to(device)
+        self.dis_list = []
+        for s in range(self.min_scale,depth):
+            dis = TODO
+            self.dis_list += [dis]
 
         # Create the Generator and the Discriminator
+        '''
         if device == th.device("cuda"):
             self.gen = DataParallel(self.gen)
             self.dis = DataParallel(self.dis)
+        '''
 
         # state of the object
         self.latent_size = latent_size
@@ -315,7 +319,8 @@ class MSG_GAN:
 
         # by default the generator and discriminator are in eval mode
         self.gen.eval()
-        self.dis.eval()
+        for dis in self.dis_list:
+            dis.eval()
 
     def generate_samples(self, num_samples):
         """
@@ -429,7 +434,8 @@ class MSG_GAN:
 
         # turn the generator and discriminator into train mode
         self.gen.train()
-        self.dis.train()
+        for dis in self.dis_list:
+            dis.train()
 
         assert isinstance(gen_optim, th.optim.Optimizer), \
             "gen_optim is not an Optimizer"
@@ -528,7 +534,8 @@ class MSG_GAN:
                                                    "GAN_DIS_OPTIM_" + str(epoch) + ".pth")
 
                 th.save(self.gen.state_dict(), gen_save_file)
-                th.save(self.dis.state_dict(), dis_save_file)
+                import itertools
+                th.save([dis.state_dict() for dis in self.dis_list], dis_save_file)
                 th.save(gen_optim.state_dict(), gen_optim_save_file)
                 th.save(dis_optim.state_dict(), dis_optim_save_file)
 
@@ -536,4 +543,6 @@ class MSG_GAN:
 
         # return the generator and discriminator back to eval mode
         self.gen.eval()
-        self.dis.eval()
+        for dis in self.dis_list:
+            dis.eval()
+
