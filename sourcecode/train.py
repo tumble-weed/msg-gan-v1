@@ -161,6 +161,9 @@ def main(args):
 
     if 'read image':
         im = skimage.io.imread(args.image_path)
+        if im.ndim == 2:
+            im = np.stack([im,im,im],axis=-1)
+        im = im[...,:3]
         # assert TODO,'fromarray'
         im_pil = Image.fromarray(im)
         ref = im_to_tensor(im_pil)
