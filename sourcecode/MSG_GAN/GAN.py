@@ -354,7 +354,7 @@ class MSG_GAN:
         fake_samples = self.gen(noise)
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
 
-        loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples)
+        loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:])
 
         # optimize discriminator
         dis_optim.zero_grad()
@@ -377,7 +377,7 @@ class MSG_GAN:
         # generate a batch of samples
         fake_samples = self.gen(noise)
 
-        loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples)
+        loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:])
 
         # optimize discriminator
         gen_optim.zero_grad()
