@@ -7,7 +7,7 @@ import time
 import timeit
 import numpy as np
 import torch as th
-
+import os
 
 class Generator(th.nn.Module):
     """ Generator of the GAN network """
@@ -485,6 +485,8 @@ class MSG_GAN:
                 gen_loss = self.optimize_generator(gen_optim, gan_input,
                                                    images, loss_fn)
 
+
+
                 # provide a loss feedback
                 if i % int(limit / feedback_factor) == 0 or i == 1:
                     elapsed = time.time() - global_time
@@ -503,6 +505,8 @@ class MSG_GAN:
                     reses = [str(int(np.power(2, dep))) + "_x_"
                              + str(int(np.power(2, dep)))
                              for dep in range(2, self.depth + 2)]
+
+
                     gen_img_files = [os.path.join(sample_dir, res, "gen_" +
                                                   str(epoch) + "_" +
                                                   str(i) + ".png")
@@ -511,6 +515,19 @@ class MSG_GAN:
                     # Make sure all the required directories exist
                     # otherwise make them
                     os.makedirs(sample_dir, exist_ok=True)
+
+                    if i == 1:
+                        # import pdb;pdb.set_trace()
+                        os.makedirs(os.path.join(sample_dir,'real'), exist_ok=True)
+                        real_img_files = [os.path.join(sample_dir,'real', res, "real_" +
+                                                                        str(epoch) + "_" +
+                                                                        str(i) + ".png")
+                                                            for res in reses]
+                        for real_img_file in real_img_files:
+                            os.makedirs(os.path.dirname(real_img_file), exist_ok=True)                        
+
+                        self.create_grid(images, real_img_files)
+
                     for gen_img_file in gen_img_files:
                         os.makedirs(os.path.dirname(gen_img_file), exist_ok=True)
 
