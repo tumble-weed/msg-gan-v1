@@ -205,11 +205,12 @@ def main(args):
     print(msg_gan.gen)
 
     if args.discriminator_file is not None:
+        assert False,'dis_list not supported'
         # load the weights into discriminator
         msg_gan.dis.load_state_dict(th.load(args.discriminator_file))
 
     print("Discriminator Configuration: ")
-    print(msg_gan.dis)
+    print(msg_gan.dis_list)
 
     # create optimizer for generator:
     gen_optim = th.optim.Adam(msg_gan.gen.parameters(), args.g_lr,
@@ -246,7 +247,7 @@ def main(args):
     data,
         gen_optim,
         dis_optim,
-        loss_fn=loss(device, msg_gan.dis),
+        loss_fn=loss(device, msg_gan.dis_list),
         num_epochs=args.num_epochs,
         checkpoint_factor=args.checkpoint_factor,
         data_percentage=args.data_percentage,

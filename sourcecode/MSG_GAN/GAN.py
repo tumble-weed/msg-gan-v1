@@ -302,7 +302,9 @@ class MSG_GAN:
                              use_spectral_norm=use_spectral_norm).to(device)
         self.dis_list = []
         for s in range(self.min_scale,depth):
-            dis = TODO
+            # dis = TODO
+            dis = Discriminator(latent_size=64,ker_size=3,padd_size=0,
+                 num_layer=3,)
             self.dis_list += [dis]
 
         # Create the Generator and the Discriminator
