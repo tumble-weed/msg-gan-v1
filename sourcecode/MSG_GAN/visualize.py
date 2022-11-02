@@ -1,6 +1,9 @@
 from matplotlib import pyplot as plt
 import os
-def visualize(msg_gan,i,sample_dir,fixed_input):
+import numpy as np
+import torch as th
+def visualize(msg_gan,epoch,i,
+              sample_dir,fixed_input,real_images):
     # create a grid of samples and save it
     reses = [str(int(np.power(2, dep))) + "_x_"
                 + str(int(np.power(2, dep)))
@@ -16,7 +19,7 @@ def visualize(msg_gan,i,sample_dir,fixed_input):
     # otherwise make them
     os.makedirs(sample_dir, exist_ok=True)
 
-    if i == 1:
+    if (i == 1) and (epoch == 1):
         # import pdb;pdb.set_trace()
         os.makedirs(os.path.join(sample_dir,'real'), exist_ok=True)
         real_img_files = [os.path.join(sample_dir,'real', res, "real_" +
@@ -26,7 +29,7 @@ def visualize(msg_gan,i,sample_dir,fixed_input):
         for real_img_file in real_img_files:
             os.makedirs(os.path.dirname(real_img_file), exist_ok=True)                        
 
-        msg_gan.create_grid(images, real_img_files)
+        msg_gan.create_grid(real_images, real_img_files)
 
     for gen_img_file in gen_img_files:
         os.makedirs(os.path.dirname(gen_img_file), exist_ok=True)

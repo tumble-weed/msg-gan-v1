@@ -8,7 +8,7 @@ import timeit
 import numpy as np
 import torch as th
 import os
-from visualize import visualize
+from MSG_GAN.visualize import visualize
 class Generator(th.nn.Module):
     """ Generator of the GAN network """
 
@@ -516,7 +516,7 @@ class MSG_GAN:
                              + str(int(np.power(2, dep)))
                              for dep in range(2, self.depth + 2)]
 
-                    visualize(msg_gan,i,sample_dir,fixed_input)
+                    visualize(self,epoch,i,sample_dir,fixed_input,images)
                     """
                     gen_img_files = [os.path.join(sample_dir, res, "gen_" +
                                                   str(epoch) + "_" +
