@@ -34,10 +34,13 @@ class GenInitialBlock(th.nn.Module):
         :param x: input to the module
         :return: y => output
         """
-        # convert the tensor shape:
-        y = x.view(*x.shape, 1, 1)  # add two dummy dimensions for
-        # convolution operation
-
+        #TODO: lets do this when the noise is created
+        if False:
+            # convert the tensor shape:
+            y = x.view(*x.shape, 1, 1)  # add two dummy dimensions for
+            # convolution operation
+        else:
+            y = x
         # perform the forward computations:
         y = self.lrelu(self.conv_1(y))
         y = self.lrelu(self.conv_2(y))

@@ -3,7 +3,7 @@
 import os
 import numpy as np
 from torch.utils.data import Dataset
-
+import torch as th
 
 class FlatDirectoryImageDataset(Dataset):
     """ pyTorch Dataset wrapper for the generic flat directory images dataset """
@@ -184,6 +184,9 @@ def get_data_loader(dataset, batch_size, num_workers):
 
 class DummyDataLoader():
     def __init__(self,ref,length):
+        print('snapping ref shape to closest to 64')
+        closest_shape = (ref.shape[-2] // 64) * 64, (ref.shape[-1] // 64) * 64
+        ref = th.nn.functional.interpolate(ref,closest_shape,mode='bilinear')
         self.ref = ref
         self.length = length
         self.counter = 0

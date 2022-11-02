@@ -118,7 +118,7 @@ class Generator(th.nn.Module):
         for block, converter in zip(self.layers, self.flow_converters):
             y = block(y)
             outputs.append(tanh(converter(y)))
-
+        # print('see effect of gan input shape');import pdb;pdb.set_trace()
         return outputs
 
 '''
@@ -330,7 +330,7 @@ class MSG_GAN:
         :param num_samples: number of samples to be generated
         :return: generated samples tensor: list[ Tensor(B x H x W x C)]
         """
-        noise = th.randn(num_samples, self.latent_size).to(self.device)
+        noise = th.randn(num_samples, self.latent_size,*self.latent_spatial).to(self.device)
         generated_images = self.gen(noise)
 
         # reshape the generated images
@@ -447,7 +447,7 @@ class MSG_GAN:
         print("Starting the training process ... ")
 
         # create fixed_input for debugging
-        fixed_input = th.randn(num_samples, self.latent_size).to(self.device)
+        fixed_input = th.randn(num_samples, self.latent_size,*self.latent_spatial).to(self.device)
 
         # create a global time counter
         global_time = time.time()
@@ -472,8 +472,8 @@ class MSG_GAN:
                 images = list(reversed(images))
 
                 gan_input = th.randn(
-                    extracted_batch_size, self.latent_size).to(self.device)
-
+                    extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
+                gan_input = gan_input[...,None,None]
                 # optimize the discriminator:
                 dis_loss = self.optimize_discriminator(dis_optim, gan_input,
                                                        images, loss_fn)
@@ -481,7 +481,15 @@ class MSG_GAN:
                 # optimize the generator:
                 # resample from the latent noise
                 gan_input = th.randn(
-                    extracted_batch_size, self.latent_size).to(self.device)
+                    extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
+                '''
+                gan_input = gan_input[...,None,None]
+                gan_input = th.zeros(gan_input.shape[:2] + (1,2)).to(gan_input.device); print('setting the shape of gan_input to ', gan_input.shape)
+                # 1,:,1,2 -> 1,3,256,320
+                # 1,:,1,3 -> 1,3,256,384
+                outputs = self.gen(gan_input)
+                print('see effect of gan input shape');import pdb;pdb.set_trace()
+                '''
                 gen_loss = self.optimize_generator(gen_optim, gan_input,
                                                    images, loss_fn)
 

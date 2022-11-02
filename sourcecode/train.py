@@ -167,6 +167,7 @@ def main(args):
         # assert TODO,'fromarray'
         im_pil = Image.fromarray(im)
         ref = im_to_tensor(im_pil)
+        
         assert ref.ndim == 3
         ref = ref.unsqueeze(0)
         ref = ref.to(device)
@@ -174,6 +175,7 @@ def main(args):
         #     yield ref
         
         data = DummyDataLoader(ref,100)
+        latent_spatial = data.ref.shape[-2]//64,data.ref.shape[-1]//64
         # print("Total number of images in the dataset:", len(dataset))
     if 'dataset' and False:
         assert TODO,'change this to a single image'
@@ -196,7 +198,7 @@ def main(args):
                       gen_dilation=args.gen_dilation,
                       use_spectral_norm=args.use_spectral_norm,
                       device=device)
-
+    msg_gan.latent_spatial = latent_spatial
     if args.generator_file is not None:
         # load the weights into generator
         msg_gan.gen.load_state_dict(th.load(args.generator_file))
