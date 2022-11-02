@@ -135,7 +135,7 @@ class RelativisticAverageHingeGAN(GANLoss):
 
     def gen_loss(self, real_samps, fake_samps,trends=defaultdict(list)):
         total_loss = 0
-        for fake_samp,real_samp,dis in zip(fake_samps,real_samps,self.dis_list):
+        for i,(fake_samp,real_samp,dis) in enumerate(zip(fake_samps,real_samps,self.dis_list)):
             # difference between real and fake:
             r_f_diff = dis(real_samp) - th.mean(dis(fake_samp))
             # difference between fake and real samples
