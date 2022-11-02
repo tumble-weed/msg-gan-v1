@@ -473,7 +473,7 @@ class MSG_GAN:
 
                 gan_input = th.randn(
                     extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
-                gan_input = gan_input[...,None,None]
+                # gan_input = gan_input[...,None,None]
                 # optimize the discriminator:
                 dis_loss = self.optimize_discriminator(dis_optim, gan_input,
                                                        images, loss_fn)
