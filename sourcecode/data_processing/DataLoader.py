@@ -198,3 +198,4 @@ class DummyDataLoader():
         if self.counter < self.length:
             self.counter += 1
             return self.ref
+        raise StopIteration

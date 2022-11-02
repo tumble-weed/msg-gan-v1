@@ -461,7 +461,9 @@ class MSG_GAN:
             total_batches = len(iter(data))
 
             limit = int((data_percentage / 100) * total_batches)
-
+            # import pdb;pdb.set_trace()
+            if epoch > 1:
+                print(i)
             for (i, batch) in enumerate(data, 1):
 
                 # extract current batch of data for training
@@ -498,7 +500,11 @@ class MSG_GAN:
 
 
                 # provide a loss feedback
-                if i % int(limit / feedback_factor) == 0 or i == 1:
+                # import pdb;pdb.set_trace()
+                # if i % int(limit / feedback_factor) == 0 or i == 1:
+                if  i >100:
+                    import pdb;pdb.set_trace()
+                if (i == 99) or (i == 1):
                     elapsed = time.time() - global_time
                     elapsed = str(datetime.timedelta(seconds=elapsed))
                     print("Elapsed [%s] batch: %d  d_loss: %f  g_loss: %f"
@@ -547,8 +553,8 @@ class MSG_GAN:
                     with th.no_grad():
                         self.create_grid(self.gen(fixed_input), gen_img_files)
                     """
-                if i > limit:
-                    break
+                # if i > limit:
+                #     break
 
             # calculate the time required for the epoch
             stop = timeit.default_timer()
