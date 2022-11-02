@@ -8,7 +8,7 @@ import timeit
 import numpy as np
 import torch as th
 import os
-
+from visualize import visualize
 class Generator(th.nn.Module):
     """ Generator of the GAN network """
 
@@ -516,7 +516,8 @@ class MSG_GAN:
                              + str(int(np.power(2, dep)))
                              for dep in range(2, self.depth + 2)]
 
-
+                    visualize(msg_gan,i,sample_dir,fixed_input)
+                    """
                     gen_img_files = [os.path.join(sample_dir, res, "gen_" +
                                                   str(epoch) + "_" +
                                                   str(i) + ".png")
@@ -545,7 +546,7 @@ class MSG_GAN:
                     gen_optim.zero_grad()
                     with th.no_grad():
                         self.create_grid(self.gen(fixed_input), gen_img_files)
-
+                    """
                 if i > limit:
                     break
 
