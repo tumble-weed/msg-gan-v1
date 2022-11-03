@@ -7,6 +7,7 @@ import time
 import timeit
 import numpy as np
 import torch as th
+import torch.nn.functional as F
 import os
 from MSG_GAN.visualize import visualize
 from flow_utils import flow_to_rgb
@@ -360,7 +361,8 @@ class MSG_GAN:
 
         # generate a batch of samples
         fake_flow = self.gen(noise)
-        fake_samples = [flow_to_rgb(flow,self.patch_size,self.stride,self.ref) for flow in fake_flow]
+        fake_samples = [flow_to_rgb(flow,self.patch_size,self.stride,
+        F.interpolate(self.ref,flow.shape[-2:])) for flow in fake_flow]
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
 
         loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
@@ -385,7 +387,7 @@ class MSG_GAN:
 
         # generate a batch of samples
         fake_flow = self.gen(noise)
-        fake_samples = [flow_to_rgb(flow,self.patch_size,self.stride,self.ref) for flow in fake_flow]
+        fake_samples = [flow_to_rgb(flow,self.patch_size,self.stride,F.interpolate(self.ref,flow.shape[-2:])) for flow in fake_flow]
         loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
 
         # optimize discriminator

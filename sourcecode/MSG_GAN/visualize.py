@@ -32,7 +32,7 @@ def visualize(msg_gan,epoch,i,
 
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
-        fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,msg_gan.ref) for f in flow]
+        fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,F.interpolate(msg_gan.ref,flow.shape[-2:])) for f in flow]
         msg_gan.create_grid(fake_samples, gen_img_files)
         flow = [visualize_optical_flow(f) for f in flow]
         # will have to remap to tensor for create grid to work
