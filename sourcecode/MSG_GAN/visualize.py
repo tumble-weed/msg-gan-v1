@@ -4,8 +4,8 @@ import numpy as np
 import torch as th
 import cv2
 import numpy as np
-
-def create_res_images(reses,prefix,epoch,i):
+from MSG_GAN.flow_utils import flow_to_rgb
+def get_res_filenames(reses,prefix,epoch,i):
     img_files = [os.path.join(sample_dir, res, f"{prefix}_" +
                                     str(epoch) + "_" +
                                     str(i) + ".png")
@@ -21,18 +21,24 @@ def visualize(msg_gan,epoch,i,
                 + str(int(np.power(2, dep)))
                 for dep in range(2, msg_gan.depth + 2)]
 
-    gen_img_files = create_res_images(reses,'gen',epoch,i)
+    gen_img_files = get_res_filenames(reses,'gen',epoch,i)
     # Make sure all the required directories exist
     # otherwise make them
     os.makedirs(sample_dir, exist_ok=True)
 
     if (i == 1) and (epoch == 1):
-        real_img_files = create_res_images(reses,'real',epoch,i)
+        real_img_files = get_res_filenames(reses,'real',epoch,i)
         msg_gan.create_grid(real_images, real_img_files)
 
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
-        msg_gan.create_grid(, gen_img_files)
+        fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.ref) for f in flow]
+        msg_gan.create_grid(fake_samples, gen_img_files)
+        flow = [visualize_optical_flow(f) for f in flow]
+        # will have to remap to tensor for create grid to work
+        flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
+        msg_gan.create_grid(flow, gen_img_files)
+    
 
 def visualize_optical_flow(im1):
     # Use Hue, Saturation, Value colour model 
@@ -45,4 +51,5 @@ def visualize_optical_flow(im1):
     bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     rgb = cv2.cvtColor(hsv, cv2.COLOR_BGR2RGB)
     # cv2.imshow("colored flow", bgr)
+    # return np.array()
     return rgb

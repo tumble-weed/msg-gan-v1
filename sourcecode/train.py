@@ -141,6 +141,9 @@ def parse_arguments():
                         default="../images/cars.png",
                         help="path to the image to reconstruct")
 
+    parser.add_argument("--patch_size",         action="store", type=int,
+                        default=7,
+                        help="patch_size for optical flow")
     args = parser.parse_args()
 
     return args
@@ -197,7 +200,9 @@ def main(args):
                       dis_dilation=args.dis_dilation,
                       gen_dilation=args.gen_dilation,
                       use_spectral_norm=args.use_spectral_norm,
-                      device=device)
+                      device=device,
+                      ref = ref,
+                      patch_size = args.patch_size)
     msg_gan.latent_spatial = latent_spatial
     if args.generator_file is not None:
         # load the weights into generator
@@ -258,7 +263,8 @@ def main(args):
         sample_dir=args.sample_dir,
         save_dir=args.model_dir,
         log_dir=args.model_dir,
-        start=args.start
+        start=args.start,
+        
     )
 
 

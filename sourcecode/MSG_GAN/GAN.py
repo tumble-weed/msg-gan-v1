@@ -9,6 +9,7 @@ import numpy as np
 import torch as th
 import os
 from MSG_GAN.visualize import visualize
+from MSG_GAN.flow_utils import flow_to_rgb
 class Generator(th.nn.Module):
     """ Generator of the GAN network """
 
@@ -294,7 +295,8 @@ class MSG_GAN:
     """
 
     def __init__(self, depth=7, latent_size=512, gen_dilation=1,
-                 dis_dilation=1, use_spectral_norm=True, device=th.device("cpu")):
+                 dis_dilation=1, use_spectral_norm=True, device=th.device("cpu"),
+                 patch_size = None):
         """ constructor for the class """
         from torch.nn import DataParallel
         self.min_scale = 3
@@ -325,6 +327,8 @@ class MSG_GAN:
             dis.eval()
         from collections import defaultdict
         self.trends = defaultdict(list)
+        self.patch_size = patch_size
+        self.ref = ref
     '''
     def generate_samples(self, num_samples):
         """
@@ -355,7 +359,7 @@ class MSG_GAN:
 
         # generate a batch of samples
         fake_flow = self.gen(noise)
-        fake_samples = [flow_to_rgb(flow,patch_size,img) for flow in fake_flow]
+        fake_samples = [flow_to_rgb(flow,self.patch_size,self.ref) for flow in fake_flow]
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
 
         loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
@@ -379,8 +383,8 @@ class MSG_GAN:
         """
 
         # generate a batch of samples
-        fake_samples = self.gen(noise)
-
+        fake_flow = self.gen(noise)
+        fake_samples = [flow_to_rgb(flow,self.patch_size,self.ref) for flow in fake_flow]
         loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
 
         # optimize discriminator
