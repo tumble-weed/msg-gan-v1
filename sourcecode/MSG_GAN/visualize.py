@@ -5,6 +5,7 @@ import torch as th
 import cv2
 import numpy as np
 from flow_utils import flow_to_rgb
+import torch.nn.functional as F
 def get_res_filenames(sample_dir,reses,prefix,epoch,i):
     img_files = [os.path.join(sample_dir, res, f"{prefix}_" +
                                     str(epoch) + "_" +
