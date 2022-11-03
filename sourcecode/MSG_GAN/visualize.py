@@ -5,7 +5,7 @@ import torch as th
 import cv2
 import numpy as np
 from flow_utils import flow_to_rgb
-def get_res_filenames(reses,prefix,epoch,i):
+def get_res_filenames(sample_dir,reses,prefix,epoch,i):
     img_files = [os.path.join(sample_dir, res, f"{prefix}_" +
                                     str(epoch) + "_" +
                                     str(i) + ".png")
@@ -21,13 +21,13 @@ def visualize(msg_gan,epoch,i,
                 + str(int(np.power(2, dep)))
                 for dep in range(2, msg_gan.depth + 2)]
 
-    gen_img_files = get_res_filenames(reses,'gen',epoch,i)
+    gen_img_files = get_res_filenames(sample_dir,reses,'gen',epoch,i)
     # Make sure all the required directories exist
     # otherwise make them
     os.makedirs(sample_dir, exist_ok=True)
 
     if (i == 1) and (epoch == 1):
-        real_img_files = get_res_filenames(reses,'real',epoch,i)
+        real_img_files = get_res_filenames(sample_dir,reses,'real',epoch,i)
         msg_gan.create_grid(real_images, real_img_files)
 
     with th.no_grad():

@@ -2,6 +2,7 @@ import torch
 from torch.nn.functional import fold, unfold
 
 def combine_patches(O, patch_size, stride, img_shape):
+    
     assert img_shape.__len__() == 4
     assert len(patch_size) == 2
     assert len(O.shape) == 6
@@ -10,7 +11,7 @@ def combine_patches(O, patch_size, stride, img_shape):
     O = O.contiguous()
     O = O.view(-1,*O.shape[-3:])
     assert O.shape[-2:] == patch_size
-
+    device = O.device
     channels = 3
     O = O.permute(1, 0, 2, 3).unsqueeze(0) # chan,batch_size,patch_size,patch_size
     patches = O.contiguous().view(O.shape[0], O.shape[1], O.shape[2], -1) \
