@@ -52,16 +52,16 @@ class Generator(th.nn.Module):
             if i <= 2:
                 layer = GenGeneralConvBlock(self.latent_size, self.latent_size,
                                             dilation=dilation)
-                rgb = to_flow(self.latent_size)
+                flow = to_flow(self.latent_size)
             else:
                 layer = GenGeneralConvBlock(
                     int(self.latent_size // np.power(2, i - 3)),
                     int(self.latent_size // np.power(2, i - 2)),
                     dilation=dilation
                 )
-                rgb = to_flow(int(self.latent_size // np.power(2, i - 2)))
+                flow = to_flow(int(self.latent_size // np.power(2, i - 2)))
             self.layers.append(layer)
-            self.flow_converters.append(rgb)
+            self.flow_converters.append(flow)
 
         # if spectral normalization is on:
         if use_spectral_norm:
@@ -325,7 +325,7 @@ class MSG_GAN:
             dis.eval()
         from collections import defaultdict
         self.trends = defaultdict(list)
-
+    '''
     def generate_samples(self, num_samples):
         """
         generate samples using this gan
@@ -340,6 +340,7 @@ class MSG_GAN:
                                     generated_images))
 
         return generated_images
+    '''
 
     def optimize_discriminator(self, dis_optim, noise, real_batch, loss_fn):
         """
@@ -353,7 +354,8 @@ class MSG_GAN:
         """
 
         # generate a batch of samples
-        fake_samples = self.gen(noise)
+        fake_flow = self.gen(noise)
+        fake_samples = [flow_to_rgb(flow,patch_size,img) for flow in fake_flow]
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
 
         loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)

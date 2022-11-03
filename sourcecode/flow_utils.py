@@ -99,6 +99,13 @@ def patch_sample(flow,img,patch_size):
     patches = patches.reshape(N,3,H,patch_size,W,patch_size)
     patches = patches.permute(0,1,2,4,3,5)
     return patches
+def flow_to_rgb(flow,patch_size,img):
+    flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
+    fake_patches = patch_sample(fake_flow,img[:1],patch_size = patch_size)
+    # img_shape = real_cpu.shape
+    img_shape = img.shape
+    fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
+    return fake
 '''
 # for making an image from fake_flow
 fake_flow = netG(noise)[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]

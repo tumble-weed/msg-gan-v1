@@ -2,6 +2,18 @@ from matplotlib import pyplot as plt
 import os
 import numpy as np
 import torch as th
+import cv2
+import numpy as np
+
+def create_res_images(reses,prefix,epoch,i):
+    img_files = [os.path.join(sample_dir, res, f"{prefix}_" +
+                                    str(epoch) + "_" +
+                                    str(i) + ".png")
+                        for res in reses]
+
+    for img_file in img_files:
+        os.makedirs(os.path.dirname(img_file), exist_ok=True)                        
+    return img_files
 def visualize(msg_gan,epoch,i,
               sample_dir,fixed_input,real_images):
     # create a grid of samples and save it
@@ -9,30 +21,28 @@ def visualize(msg_gan,epoch,i,
                 + str(int(np.power(2, dep)))
                 for dep in range(2, msg_gan.depth + 2)]
 
-
-    gen_img_files = [os.path.join(sample_dir, res, "gen_" +
-                                    str(epoch) + "_" +
-                                    str(i) + ".png")
-                        for res in reses]
-
+    gen_img_files = create_res_images(reses,'gen',epoch,i)
     # Make sure all the required directories exist
     # otherwise make them
     os.makedirs(sample_dir, exist_ok=True)
 
     if (i == 1) and (epoch == 1):
-        # import pdb;pdb.set_trace()
-        os.makedirs(os.path.join(sample_dir,'real'), exist_ok=True)
-        real_img_files = [os.path.join(sample_dir,'real', res, "real_" +
-                                                        str(epoch) + "_" +
-                                                        str(i) + ".png")
-                                            for res in reses]
-        for real_img_file in real_img_files:
-            os.makedirs(os.path.dirname(real_img_file), exist_ok=True)                        
-
+        real_img_files = create_res_images(reses,'real',epoch,i)
         msg_gan.create_grid(real_images, real_img_files)
 
-    for gen_img_file in gen_img_files:
-        os.makedirs(os.path.dirname(gen_img_file), exist_ok=True)
-
     with th.no_grad():
-        msg_gan.create_grid(msg_gan.gen(fixed_input), gen_img_files)
+        flow = msg_gan.gen(fixed_input)
+        msg_gan.create_grid(, gen_img_files)
+
+def visualize_optical_flow(im1):
+    # Use Hue, Saturation, Value colour model 
+    hsv = np.zeros(im1.shape, dtype=np.uint8)
+    hsv[..., 1] = 255
+
+    mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+    hsv[..., 0] = ang * 180 / np.pi / 2
+    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    rgb = cv2.cvtColor(hsv, cv2.COLOR_BGR2RGB)
+    # cv2.imshow("colored flow", bgr)
+    return rgb
