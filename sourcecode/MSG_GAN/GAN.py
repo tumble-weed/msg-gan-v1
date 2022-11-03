@@ -329,6 +329,7 @@ class MSG_GAN:
         self.trends = defaultdict(list)
         self.patch_size = patch_size
         self.ref = ref
+        self.stride = stride
     '''
     def generate_samples(self, num_samples):
         """
