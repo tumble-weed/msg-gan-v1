@@ -4,7 +4,7 @@ import numpy as np
 import torch as th
 import cv2
 import numpy as np
-from MSG_GAN.flow_utils import flow_to_rgb
+from flow_utils import flow_to_rgb
 def get_res_filenames(reses,prefix,epoch,i):
     img_files = [os.path.join(sample_dir, res, f"{prefix}_" +
                                     str(epoch) + "_" +
@@ -32,7 +32,7 @@ def visualize(msg_gan,epoch,i,
 
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
-        fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.ref) for f in flow]
+        fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,msg_gan.ref) for f in flow]
         msg_gan.create_grid(fake_samples, gen_img_files)
         flow = [visualize_optical_flow(f) for f in flow]
         # will have to remap to tensor for create grid to work

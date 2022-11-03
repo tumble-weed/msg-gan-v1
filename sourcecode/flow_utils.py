@@ -80,12 +80,13 @@ def patch_sample(flow,img,patch_size):
     device = flow.device
     N,_,H,W = flow.shape
 #             flow = torch.permute(flow,(0,2,3,1))
-    assert img.shape[-2] == img.shape[-1]
-    step = 1./img.shape[-2]
+    # assert img.shape[-2] == img.shape[-1]
+    step_y = 1./img.shape[-2]
+    step_x = 1./img.shape[-1]
     new_flow = torch.zeros(N,H,patch_size,W,patch_size,2).to(device)
     mesh = torch.meshgrid(
-        torch.linspace(-step*(patch_size//2),step*(patch_size//2),patch_size),
-        torch.linspace(-step*(patch_size//2),step*(patch_size//2),patch_size),
+        torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
+        torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
     )
     mesh = torch.stack(mesh,dim=-1)
     mesh = mesh.to(device)
@@ -99,9 +100,9 @@ def patch_sample(flow,img,patch_size):
     patches = patches.reshape(N,3,H,patch_size,W,patch_size)
     patches = patches.permute(0,1,2,4,3,5)
     return patches
-def flow_to_rgb(flow,patch_size,img):
+def flow_to_rgb(flow,patch_size,stride,img):
     flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
-    fake_patches = patch_sample(fake_flow,img[:1],patch_size = patch_size)
+    fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape
     fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)

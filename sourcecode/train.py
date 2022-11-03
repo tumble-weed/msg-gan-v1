@@ -144,6 +144,11 @@ def parse_arguments():
     parser.add_argument("--patch_size",         action="store", type=int,
                         default=7,
                         help="patch_size for optical flow")
+
+    parser.add_argument("--stride",         
+                        action="store", type=int,
+                        default=1,
+                        help="stride for patch placement for optical flow")                        
     args = parser.parse_args()
 
     return args
@@ -202,7 +207,8 @@ def main(args):
                       use_spectral_norm=args.use_spectral_norm,
                       device=device,
                       ref = ref,
-                      patch_size = args.patch_size)
+                      patch_size = args.patch_size,
+                      stride = args.stride)
     msg_gan.latent_spatial = latent_spatial
     if args.generator_file is not None:
         # load the weights into generator
