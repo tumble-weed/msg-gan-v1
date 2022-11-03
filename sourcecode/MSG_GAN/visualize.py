@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from flow_utils import flow_to_rgb
 import torch.nn.functional as F
+tensor_to_numpy = lambda t:t.detach().cpu().numpy()
 def get_res_filenames(sample_dir,reses,prefix,epoch,i):
     img_files = [os.path.join(sample_dir, res, f"{prefix}_" +
                                     str(epoch) + "_" +
@@ -33,17 +34,18 @@ def visualize(msg_gan,epoch,i,
 
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
-        fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,F.interpolate(msg_gan.ref,flow.shape[-2:])) for f in flow]
+        fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f in flow]
         msg_gan.create_grid(fake_samples, gen_img_files)
-        flow = [visualize_optical_flow(f) for f in flow]
+        flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
         # will have to remap to tensor for create grid to work
         flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
         msg_gan.create_grid(flow, gen_img_files)
     
 
-def visualize_optical_flow(im1):
+def visualize_optical_flow(flow):
+    # from https://stackoverflow.com/questions/28898346/visualize-optical-flow-with-color-model
     # Use Hue, Saturation, Value colour model 
-    hsv = np.zeros(im1.shape, dtype=np.uint8)
+    hsv = np.zeros(flow.shape, dtype=np.uint8)
     hsv[..., 1] = 255
 
     mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
