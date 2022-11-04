@@ -19,7 +19,7 @@ def get_res_filenames(sample_dir,reses,prefix,epoch,i):
 def visualize(msg_gan,epoch,i,
               sample_dir,fixed_input,real_images,
               purge=True):
-    if purge:
+    if purge and (epoch == 1) and (i == 1):
         print(f'purging {sample_dir}')
         os.system(f'rm -rf {sample_dir}')
     # create a grid of samples and save it
