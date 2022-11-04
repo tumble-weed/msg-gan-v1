@@ -191,6 +191,7 @@ class DummyDataLoader():
         self.length = length
         self.counter = 0
     def __iter__(self):
+        self.counter = 0
         return self
     def __len__(self):
         return self.length
