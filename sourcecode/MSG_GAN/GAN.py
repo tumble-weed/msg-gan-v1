@@ -43,7 +43,7 @@ class Generator(th.nn.Module):
         # create the ToRGB layers for various outputs:
         
         def to_flow(in_channels):
-            return Conv2d(in_channels, 3, (1, 1), bias=True)
+            return Conv2d(in_channels, 2, (1, 1), bias=True)
 
         # create a module list of the other required general convolution blocks
         self.layers = ModuleList([GenInitialBlock(self.latent_size)])
