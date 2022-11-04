@@ -17,13 +17,18 @@ def get_res_filenames(sample_dir,reses,prefix,epoch,i):
         os.makedirs(os.path.dirname(img_file), exist_ok=True)                        
     return img_files
 def visualize(msg_gan,epoch,i,
-              sample_dir,fixed_input,real_images):
+              sample_dir,fixed_input,real_images,
+              purge=True):
+    if purge:
+        print(f'purging {sample_dir}')
+        os.system(f'rm -rf {sample_dir}')
     # create a grid of samples and save it
     reses = [str(int(np.power(2, dep))) + "_x_"
                 + str(int(np.power(2, dep)))
                 for dep in range(2, msg_gan.depth + 2)]
 
     gen_img_files = get_res_filenames(sample_dir,reses,'gen',epoch,i)
+    flow_img_files = get_res_filenames(sample_dir,reses,'flow',epoch,i)
     # Make sure all the required directories exist
     # otherwise make them
     os.makedirs(sample_dir, exist_ok=True)
@@ -35,6 +40,7 @@ def visualize(msg_gan,epoch,i,
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
         #=================================================
+        device = fixed_input.device
         print('hacking flow to yield original image back')
         new_flow = []
         for k,f in enumerate(flow):
@@ -43,10 +49,12 @@ def visualize(msg_gan,epoch,i,
                 th.linspace(-1,1,H),
                 th.linspace(-1,1,W)
             )
-            f = th.stack([X,Y],dim=-1)
-            f = f.permute(2,0,1)[None,...]
-            assert f.shape == flow[k].shape
-            new_flow.append(f)
+            new_f = th.stack([X,Y],dim=-1)
+            new_f = new_f.permute(2,0,1)[None,...]
+            new_f = new_f.to(device)
+            assert new_f.shape == flow[k].shape
+            new_flow.append(new_f)
+            # import pdb;pdb.set_trace()
         flow = new_flow
         #=================================================
         fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f in flow]
@@ -54,14 +62,14 @@ def visualize(msg_gan,epoch,i,
         flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
         # will have to remap to tensor for create grid to work
         flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
-        msg_gan.create_grid(flow, gen_img_files)
+        msg_gan.create_grid(flow, flow_img_files)
     
 
 def visualize_optical_flow(flow):
     # from https://stackoverflow.com/questions/28898346/visualize-optical-flow-with-color-model
     # Use Hue, Saturation, Value colour model 
     
-    hsv = np.zeros(flow.shape, dtype=np.uint8)
+    hsv = np.zeros(flow.shape[:2]+(3,), dtype=np.uint8)
     hsv[..., 1] = 255
 
     mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
