@@ -35,10 +35,12 @@ def visualize(msg_gan,epoch,i,
 
     if (i == 1) and (epoch == 1):
         real_img_files = get_res_filenames(sample_dir,reses,'real',epoch,i)
+        # assert real_images[-1].shape[-2:] == (256,256)
         msg_gan.create_grid(real_images, real_img_files)
 
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
+        assert flow[-1].shape == real_images[-1].shape
         #=================================================
         device = fixed_input.device
         print('hacking flow to yield original image back')
@@ -58,6 +60,7 @@ def visualize(msg_gan,epoch,i,
         flow = new_flow
         #=================================================
         fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f in flow]
+        assert fake_samples[-1].shape == real_images[-1].shape
         msg_gan.create_grid(fake_samples, gen_img_files)
         flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
         # will have to remap to tensor for create grid to work

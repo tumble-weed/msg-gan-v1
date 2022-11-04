@@ -183,7 +183,7 @@ def main(args):
         #     yield ref
         
         data = DummyDataLoader(ref,100)
-        latent_spatial = data.ref.shape[-2]//64,data.ref.shape[-1]//64
+        latent_spatial = data.ref.shape[-2]//64 -3,data.ref.shape[-1]//64 -3
         # print("Total number of images in the dataset:", len(dataset))
     if 'dataset' and False:
         assert TODO,'change this to a single image'
@@ -206,12 +206,13 @@ def main(args):
                       gen_dilation=args.gen_dilation,
                       use_spectral_norm=args.use_spectral_norm,
                       device=device,
-                      ref = ref,
+                      ref = data.ref,
                       patch_size = args.patch_size,
                       stride = args.stride)
     msg_gan.latent_spatial = latent_spatial
     if args.generator_file is not None:
         # load the weights into generator
+        print('unexpected: load file');import pdb;pdb.set_trace()
         msg_gan.gen.load_state_dict(th.load(args.generator_file))
 
     print("Generator Configuration: ")
