@@ -40,7 +40,7 @@ def visualize(msg_gan,epoch,i,
 
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
-        assert flow[-1].shape == real_images[-1].shape
+        assert flow[-1].shape[-2:] == real_images[-1].shape[-2:]
         #=================================================
         device = fixed_input.device
         print('hacking flow to yield original image back')
