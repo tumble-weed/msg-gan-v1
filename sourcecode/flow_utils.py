@@ -104,7 +104,10 @@ def patch_sample(flow,img,patch_size):
     patches = patches.permute(0,1,2,4,3,5)
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
-    flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
+    if patch_size % 2 == 1:
+        flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
+    else:
+        flow = flow[:,:,(patch_size//2):-(patch_size//2)+1,patch_size//2:-(patch_size//2) + 1]
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape
