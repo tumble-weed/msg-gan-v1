@@ -34,6 +34,21 @@ def visualize(msg_gan,epoch,i,
 
     with th.no_grad():
         flow = msg_gan.gen(fixed_input)
+        #=================================================
+        print('hacking flow to yield original image back')
+        new_flow = []
+        for k,f in enumerate(flow):
+            H,W = f.shape[-2:]
+            Y,X = th.meshgrid(
+                th.linspace(-1,1,H),
+                th.linspace(-1,1,W)
+            )
+            f = th.stack([X,Y],dim=-1)
+            f = f.permute(2,0,1)[None,...]
+            assert f.shape == flow[k].shape
+            new_flow.append(f)
+        flow = new_flow
+        #=================================================
         fake_samples = [flow_to_rgb(f,msg_gan.patch_size,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f in flow]
         msg_gan.create_grid(fake_samples, gen_img_files)
         flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
@@ -45,6 +60,7 @@ def visualize(msg_gan,epoch,i,
 def visualize_optical_flow(flow):
     # from https://stackoverflow.com/questions/28898346/visualize-optical-flow-with-color-model
     # Use Hue, Saturation, Value colour model 
+    
     hsv = np.zeros(flow.shape, dtype=np.uint8)
     hsv[..., 1] = 255
 
