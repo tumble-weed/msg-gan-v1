@@ -1,3 +1,6 @@
+__TODO__:
+- even patch sizes seem to be presenting problems for patch sampling and then reconstruction. The required number of patches for reconstruction is an odd number that means that the number of patches to ignore is not going to be symmetric ( for e.g. for a 32x56 image, 29x53 patches of size 4x4 are required, but ignoring symmetrically leads to 28x52)
+
 # **Please note that this is not the repo for the MSG-GAN research paper. Please head over to the [msg-stylegan-tf](https://github.com/akanimax/msg-stylegan-tf) repository for the official code and trained models for the [MSG-GAN](https://arxiv.org/abs/1903.06048) paper.
 
 # MSG-GAN
