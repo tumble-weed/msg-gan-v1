@@ -67,8 +67,8 @@ def visualize(msg_gan,epoch,i,
         flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
         msg_gan.create_grid(flow, flow_img_files)
     
-    if epoch != 1:
-        import pdb;pdb.set_trace()
+    # if epoch != 1:
+    #     import pdb;pdb.set_trace()
 def visualize_optical_flow(flow):
     # from https://stackoverflow.com/questions/28898346/visualize-optical-flow-with-color-model
     # Use Hue, Saturation, Value colour model 
