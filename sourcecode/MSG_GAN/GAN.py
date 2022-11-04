@@ -14,7 +14,7 @@ from flow_utils import flow_to_rgb
 class Generator(th.nn.Module):
     """ Generator of the GAN network """
 
-    def __init__(self, depth=7, latent_size=512, dilation=1, use_spectral_norm=True):
+    def __init__(self, depth=7, latent_size=512, dilation=1, use_spectral_norm=True,min_scale = 0):
         """
         constructor for the Generator class
         :param depth: required depth of the Network
@@ -68,7 +68,7 @@ class Generator(th.nn.Module):
         # if spectral normalization is on:
         if use_spectral_norm:
             self.turn_on_spectral_norm()
-
+        self.min_scale = min_scale
     def turn_on_spectral_norm(self):
         """
         private helper for turning on the spectral normalization
@@ -121,7 +121,7 @@ class Generator(th.nn.Module):
             y = block(y)
             outputs.append(tanh(converter(y)))
         # print('see effect of gan input shape');import pdb;pdb.set_trace()
-        return outputs
+        return outputs[self.min_scale:]
 
 '''
 class Discriminator(th.nn.Module):
@@ -302,7 +302,7 @@ class MSG_GAN:
         from torch.nn import DataParallel
         self.min_scale = 3
         self.gen = Generator(depth, latent_size, dilation=gen_dilation,
-                             use_spectral_norm=use_spectral_norm).to(device)
+                             use_spectral_norm=use_spectral_norm,min_scale=self.min_scale).to(device)
         self.dis_list = []
         for s in range(self.min_scale,depth):
             # dis = TODO
@@ -329,7 +329,7 @@ class MSG_GAN:
         from collections import defaultdict
         self.trends = defaultdict(list)
         self.largest_patch_size = patch_size
-        self.patch_sizes = list(reversed([self.largest_patch_size//(2**i) for i in range(depth)]))
+        self.patch_sizes = list(reversed([self.largest_patch_size//(2**i) for i in range(depth)]))[self.min_scale:]
         self.ref = ref
         self.stride = stride
     '''

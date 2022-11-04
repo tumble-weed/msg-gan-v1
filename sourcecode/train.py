@@ -142,7 +142,7 @@ def parse_arguments():
                         help="path to the image to reconstruct")
 
     parser.add_argument("--patch_size",         action="store", type=int,
-                        default=7,
+                        default=32,
                         help="patch_size for optical flow")
 
     parser.add_argument("--stride",         
