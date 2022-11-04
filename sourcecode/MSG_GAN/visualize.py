@@ -25,7 +25,7 @@ def visualize(msg_gan,epoch,i,
     # create a grid of samples and save it
     reses = [str(int(np.power(2, dep))) + "_x_"
                 + str(int(np.power(2, dep)))
-                for dep in range(2, msg_gan.depth + 2)]
+                for dep in range(2, msg_gan.depth + 2)[msg_gan.min_scale:]]
 
     gen_img_files = get_res_filenames(sample_dir,reses,'gen',epoch,i)
     flow_img_files = get_res_filenames(sample_dir,reses,'flow',epoch,i)
@@ -67,7 +67,8 @@ def visualize(msg_gan,epoch,i,
         flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
         msg_gan.create_grid(flow, flow_img_files)
     
-
+    if epoch != 1:
+        import pdb;pdb.set_trace()
 def visualize_optical_flow(flow):
     # from https://stackoverflow.com/questions/28898346/visualize-optical-flow-with-color-model
     # Use Hue, Saturation, Value colour model 

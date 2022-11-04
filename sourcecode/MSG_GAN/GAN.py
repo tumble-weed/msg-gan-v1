@@ -532,7 +532,7 @@ class MSG_GAN:
                              + str(int(np.power(2, dep)))
                              for dep in range(2, self.depth + 2)]
 
-                    visualize(self,epoch,i,sample_dir,fixed_input,images)
+                    visualize(self,epoch,i,sample_dir,fixed_input,images[self.min_scale:])
                     """
                     gen_img_files = [os.path.join(sample_dir, res, "gen_" +
                                                   str(epoch) + "_" +
