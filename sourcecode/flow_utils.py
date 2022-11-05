@@ -87,10 +87,16 @@ def patch_sample(flow,img,patch_size):
     step_y = 1./img.shape[-2]
     step_x = 1./img.shape[-1]
     new_flow = torch.zeros(N,H,patch_size,W,patch_size,2).to(device)
-    mesh = torch.meshgrid(
-        torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
-        torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
-    )
+    if patch_size % 2 == 1:
+        mesh = torch.meshgrid(
+            torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
+            torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
+        )
+    else:
+        mesh = torch.meshgrid(
+            torch.linspace(-step_y*(patch_size//2 - 1),step_y*(patch_size//2 + 1),patch_size),
+            torch.linspace(-step_x*(patch_size//2 - 1),step_x*(patch_size//2 + 1),patch_size),
+        )        
     mesh = torch.stack(mesh,dim=-1)
     mesh = mesh.to(device)
     flow = flow.permute(0,2,3,1)
