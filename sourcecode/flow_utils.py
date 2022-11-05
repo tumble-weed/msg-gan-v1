@@ -82,6 +82,17 @@ def sample_using_flow(flow,x,patch_size):
 def patch_sample(flow,img,patch_size):
 #             fake_flow.shape = N,2,H,W
     device = flow.device
+    img = torch.stack(torch.meshgrid(
+        [torch.arange(img.shape[2],device=device).float(),
+        torch.arange(img.shape[3],device=device).float()]
+    ),dim=0)
+    img = torch.cat(
+        [img,
+        torch.zeros_like(img[:1]),],
+        dim =0
+    )[None,...]
+    print('setting img to arange, to see how far are patches being pulled from')
+    
     N,_,fH,fW = flow.shape
     H,W = img.shape[-2:]
 #             flow = torch.permute(flow,(0,2,3,1))
@@ -120,12 +131,14 @@ def patch_sample(flow,img,patch_size):
     flow = flow.permute(0,2,3,1)
     new_flow[...,0] = flow[:,:,None,:,None,0] + mesh[None,None,:,None,:,0]
     new_flow[...,1] = flow[:,:,None,:,None,1] + mesh[None,None,:,None,:,1]
-    import pdb;pdb.set_trace()
+
 #     new_flow = new_flow.permute((0,2,3,1,4,5))
 #     new_flow = torch.flatten(new_flow,start_dim=0,end_dim=2)
     new_flow = torch.reshape(new_flow,(N,(fH)*patch_size,(fW)*patch_size,2))
     patches = torch.nn.functional.grid_sample(img,new_flow)
     patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
+    if img.shape[-1] >= 256:
+        import pdb;pdb.set_trace()
     patches = patches.permute(0,1,2,4,3,5)
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
