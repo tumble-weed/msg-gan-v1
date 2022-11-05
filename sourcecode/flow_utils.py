@@ -46,6 +46,7 @@ def sample_using_flow(flow,x,patch_size):
     dummy_flow[:,0,:,:] = (dummy_flow[:,0,:,:] * Ymargin)
     dummy_flow[:,1,:,:] = (dummy_flow[:,1,:,:] * Xmargin)
     flow = dummy_flow; print('setting flow to dummy flow, should recreate the original image')
+    patch_size = (1,1);print('setting patch_size to (1,1)')
     #==========================================================
     device = x.device
     batch_size = flow.shape[0]
@@ -84,19 +85,35 @@ def patch_sample(flow,img,patch_size):
     N,_,H,W = flow.shape
 #             flow = torch.permute(flow,(0,2,3,1))
     # assert img.shape[-2] == img.shape[-1]
-    step_y = 1./img.shape[-2]
-    step_x = 1./img.shape[-1]
+    step_y = 1./(img.shape[-2] -1) 
+    step_x = 1./(img.shape[-1] - 1)
     new_flow = torch.zeros(N,H,patch_size,W,patch_size,2).to(device)
+    '''
     if patch_size % 2 == 1:
+        # odd
         mesh = torch.meshgrid(
             torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
             torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
         )
     else:
+        # even
         mesh = torch.meshgrid(
-            torch.linspace(-step_y*(patch_size//2 - 1),step_y*(patch_size//2 + 1),patch_size),
-            torch.linspace(-step_x*(patch_size//2 - 1),step_x*(patch_size//2 + 1),patch_size),
+            torch.linspace(-step_y*(patch_size//2 - 0.5),step_y*(patch_size//2 + 0.5),patch_size),
+            torch.linspace(-step_x*(patch_size//2 - 0.5),step_x*(patch_size//2 + 0.5),patch_size),
         )        
+    '''
+    if 'even with 0.5' and False:
+        is_even = float((patch_size % 2) == 0)
+        mesh = torch.meshgrid(
+                torch.linspace(-step_y*(patch_size//2 - 0.5*is_even),step_y*(patch_size//2 - 0.5*is_even),patch_size),
+                torch.linspace(-step_x*(patch_size//2 - 0.5*is_even),step_x*(patch_size//2 - 0.5*is_even),patch_size),
+            )
+    elif 'same for even and odd' and True:
+        mesh = torch.meshgrid(
+                torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
+                torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
+            )        
+    import pdb;pdb.set_trace()
     mesh = torch.stack(mesh,dim=-1)
     mesh = mesh.to(device)
     flow = flow.permute(0,2,3,1)
@@ -110,10 +127,16 @@ def patch_sample(flow,img,patch_size):
     patches = patches.permute(0,1,2,4,3,5)
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
-    if patch_size % 2 == 1:
+    # patch_size = 1;print('setting patch size to 1')
+    if 'heterogenous for even and odd' and True:
+        if patch_size > 1:
+            if patch_size % 2 == 1:
+                flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
+            else:
+                flow = flow[:,:,(patch_size//2):-(patch_size//2)+1,patch_size//2:-(patch_size//2) + 1]
+
+    elif 'same for even and odd' and False:
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
-    else:
-        flow = flow[:,:,(patch_size//2):-(patch_size//2)+1,patch_size//2:-(patch_size//2) + 1]
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape

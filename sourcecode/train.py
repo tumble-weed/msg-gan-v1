@@ -184,6 +184,7 @@ def main(args):
         
         data = DummyDataLoader(ref,100)
         latent_spatial = data.ref.shape[-2]//64 -3,data.ref.shape[-1]//64 -3
+        # data.ref = th.zeros_like(data.ref); data.ref[...,::2] = 1;print('setting image to stripes')
         # print("Total number of images in the dataset:", len(dataset))
     if 'dataset' and False:
         assert TODO,'change this to a single image'

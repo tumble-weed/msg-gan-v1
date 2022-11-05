@@ -7,6 +7,7 @@ import numpy as np
 from flow_utils import flow_to_rgb
 import torch.nn.functional as F
 tensor_to_numpy = lambda t:t.detach().cpu().numpy()
+
 def get_res_filenames(sample_dir,reses,prefix,epoch,i):
     img_files = [os.path.join(sample_dir, res, f"{prefix}_" +
                                     str(epoch) + "_" +
@@ -45,11 +46,17 @@ def visualize(msg_gan,epoch,i,
         device = fixed_input.device
         print('hacking flow to yield original image back')
         new_flow = []
-        for k,f in enumerate(flow):
+        assert len(flow) == len(msg_gan.patch_sizes)
+        for k,(f,ps) in enumerate(zip(flow,msg_gan.patch_sizes)):
             H,W = f.shape[-2:]
+            step_y = 1./(H - 1)
+            half_step_y = step_y/2.
+            step_x = 1./(W- 1)
+            half_step_x = step_x/2.
+            assert (ps[0] % 2 == 0) and (ps[1] % 2 == 0), 'this expression only valid for even patch sizes'
             Y,X = th.meshgrid(
-                th.linspace(-1,1,H),
-                th.linspace(-1,1,W)
+                th.linspace(-1 + half_step_y ,1 - half_step_y,H),
+                th.linspace(-1 + half_step_x,1 -  half_step_x,W)
             )
             new_f = th.stack([X,Y],dim=-1)
             new_f = new_f.permute(2,0,1)[None,...]
