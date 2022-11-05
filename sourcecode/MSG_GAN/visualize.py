@@ -49,11 +49,11 @@ def visualize(msg_gan,epoch,i,
         assert len(flow) == len(msg_gan.patch_sizes)
         for k,(f,ps) in enumerate(zip(flow,msg_gan.patch_sizes)):
             H,W = f.shape[-2:]
-            step_y = 1./(H - 1)
+            step_y = (1. - (-1.))/(H - 1)
             half_step_y = step_y/2.
-            step_x = 1./(W- 1)
+            step_x = (1. - (-1.))/(W- 1)
             half_step_x = step_x/2.
-            assert (ps[0] % 2 == 0) and (ps[1] % 2 == 0), 'this expression only valid for even patch sizes'
+            assert (ps % 2 == 0), 'this expression only valid for even patch sizes'
             Y,X = th.meshgrid(
                 th.linspace(-1 + half_step_y ,1 - half_step_y,H),
                 th.linspace(-1 + half_step_x,1 -  half_step_x,W)

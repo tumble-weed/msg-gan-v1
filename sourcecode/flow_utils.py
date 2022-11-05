@@ -82,12 +82,13 @@ def sample_using_flow(flow,x,patch_size):
 def patch_sample(flow,img,patch_size):
 #             fake_flow.shape = N,2,H,W
     device = flow.device
-    N,_,H,W = flow.shape
+    N,_,fH,fW = flow.shape
+    H,W = img.shape[-2:]
 #             flow = torch.permute(flow,(0,2,3,1))
     # assert img.shape[-2] == img.shape[-1]
-    step_y = 1./(img.shape[-2] -1) 
-    step_x = 1./(img.shape[-1] - 1)
-    new_flow = torch.zeros(N,H,patch_size,W,patch_size,2).to(device)
+    step_y = (1 - (-1))/(H -1) 
+    step_x = (1 - (-1))/(W - 1)
+    new_flow = torch.zeros(N,fH,patch_size,fW,patch_size,2).to(device)
     '''
     if patch_size % 2 == 1:
         # odd
@@ -113,17 +114,18 @@ def patch_sample(flow,img,patch_size):
                 torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
                 torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
             )        
-    import pdb;pdb.set_trace()
+    # import pdb;pdb.set_trace()
     mesh = torch.stack(mesh,dim=-1)
     mesh = mesh.to(device)
     flow = flow.permute(0,2,3,1)
     new_flow[...,0] = flow[:,:,None,:,None,0] + mesh[None,None,:,None,:,0]
     new_flow[...,1] = flow[:,:,None,:,None,1] + mesh[None,None,:,None,:,1]
+    import pdb;pdb.set_trace()
 #     new_flow = new_flow.permute((0,2,3,1,4,5))
 #     new_flow = torch.flatten(new_flow,start_dim=0,end_dim=2)
-    new_flow = torch.reshape(new_flow,(N,H*patch_size,W*patch_size,2))
+    new_flow = torch.reshape(new_flow,(N,(fH)*patch_size,(fW)*patch_size,2))
     patches = torch.nn.functional.grid_sample(img,new_flow)
-    patches = patches.reshape(N,3,H,patch_size,W,patch_size)
+    patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
     patches = patches.permute(0,1,2,4,3,5)
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
