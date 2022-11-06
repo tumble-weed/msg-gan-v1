@@ -83,20 +83,21 @@ def patch_sample(flow,img,patch_size):
 #             fake_flow.shape = N,2,H,W
     device = flow.device
     # import pdb;pdb.set_trace()
-    img_xy = torch.meshgrid(
-        torch.arange(img.shape[3],device=device).float(),
-        torch.arange(img.shape[2],device=device).float(),
-        indexing = 'xy'
-    )
-    img_x,img_y = img_xy
-    img = torch.stack([img_y,img_x],dim=0)
-    
-    img = torch.cat(
-        [img,
-        torch.zeros_like(img[:1]),],
-        dim =0
-    )[None,...]
-    print('setting img to arange, to see how far are patches being pulled from')
+    if False:
+        img_xy = torch.meshgrid(
+            torch.arange(img.shape[3],device=device).float(),
+            torch.arange(img.shape[2],device=device).float(),
+            indexing = 'xy'
+        )
+        img_x,img_y = img_xy
+        img = torch.stack([img_y,img_x],dim=0)
+        
+        img = torch.cat(
+            [img,
+            torch.zeros_like(img[:1]),],
+            dim =0
+        )[None,...]
+        print('setting img to arange, to see how far are patches being pulled from')
     
     N,_,fH,fW = flow.shape
     H,W = img.shape[-2:]
