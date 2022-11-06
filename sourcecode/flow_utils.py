@@ -82,10 +82,15 @@ def sample_using_flow(flow,x,patch_size):
 def patch_sample(flow,img,patch_size):
 #             fake_flow.shape = N,2,H,W
     device = flow.device
-    img = torch.stack(torch.meshgrid(
-        [torch.arange(img.shape[2],device=device).float(),
-        torch.arange(img.shape[3],device=device).float()]
-    ),dim=0)
+    # import pdb;pdb.set_trace()
+    img_xy = torch.meshgrid(
+        torch.arange(img.shape[3],device=device).float(),
+        torch.arange(img.shape[2],device=device).float(),
+        indexing = 'xy'
+    )
+    img_x,img_y = img_xy
+    img = torch.stack([img_y,img_x],dim=0)
+    
     img = torch.cat(
         [img,
         torch.zeros_like(img[:1]),],
@@ -116,17 +121,20 @@ def patch_sample(flow,img,patch_size):
     '''
     if 'even with 0.5' and False:
         is_even = float((patch_size % 2) == 0)
+        assert False,'meshgrid is wrong'
         mesh = torch.meshgrid(
                 torch.linspace(-step_y*(patch_size//2 - 0.5*is_even),step_y*(patch_size//2 - 0.5*is_even),patch_size),
                 torch.linspace(-step_x*(patch_size//2 - 0.5*is_even),step_x*(patch_size//2 - 0.5*is_even),patch_size),
             )
     elif 'same for even and odd' and True:
-        mesh = torch.meshgrid(
-                torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
+        mesh_xy = torch.meshgrid(
                 torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
+                torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
+                indexing = 'xy'
             )        
+        mesh_x,mesh_y = mesh_xy
     # import pdb;pdb.set_trace()
-    mesh = torch.stack(mesh,dim=-1)
+    mesh = torch.stack([mesh_y,mesh_x],dim=-1)
     mesh = mesh.to(device)
     flow = flow.permute(0,2,3,1)
     new_flow[...,0] = flow[:,:,None,:,None,0] + mesh[None,None,:,None,:,0]

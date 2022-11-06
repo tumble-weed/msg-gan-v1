@@ -54,16 +54,18 @@ def visualize(msg_gan,epoch,i,
             step_x = (1. - (-1.))/(W- 1)
             half_step_x = step_x/2.
             assert (ps % 2 == 0), 'this expression only valid for even patch sizes'
-            Y,X = th.meshgrid(
+            X,Y = th.meshgrid(
+                th.linspace(-1 + half_step_x,1 -  half_step_x,W),
                 th.linspace(-1 + half_step_y ,1 - half_step_y,H),
-                th.linspace(-1 + half_step_x,1 -  half_step_x,W)
+                indexing = 'xy'
             )
-            new_f = th.stack([X,Y],dim=-1)
+            new_f = th.stack([Y,X],dim=-1)
             new_f = new_f.permute(2,0,1)[None,...]
             new_f = new_f.to(device)
             assert new_f.shape == flow[k].shape
             new_flow.append(new_f)
             # import pdb;pdb.set_trace()
+        import pdb;pdb.set_trace()
         flow = new_flow
         #=================================================
         fake_samples = [flow_to_rgb(f,ps,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f,ps in zip(flow,msg_gan.patch_sizes)]
