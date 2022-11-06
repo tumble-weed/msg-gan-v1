@@ -65,7 +65,7 @@ def visualize(msg_gan,epoch,i,
             assert new_f.shape == flow[k].shape
             new_flow.append(new_f)
             # import pdb;pdb.set_trace()
-        import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace()
         flow = new_flow
         #=================================================
         fake_samples = [flow_to_rgb(f,ps,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f,ps in zip(flow,msg_gan.patch_sizes)]

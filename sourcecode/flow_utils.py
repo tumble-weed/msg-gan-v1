@@ -120,16 +120,17 @@ def patch_sample(flow,img,patch_size):
         )        
     '''
     if 'even with 0.5' and False:
-        is_even = float((patch_size % 2) == 0)
-        assert False,'meshgrid is wrong'
-        mesh = torch.meshgrid(
-                torch.linspace(-step_y*(patch_size//2 - 0.5*is_even),step_y*(patch_size//2 - 0.5*is_even),patch_size),
-                torch.linspace(-step_x*(patch_size//2 - 0.5*is_even),step_x*(patch_size//2 - 0.5*is_even),patch_size),
-            )
+        pass
+        # is_even = float((patch_size % 2) == 0)
+        # assert False,'meshgrid is wrong'
+        # mesh = torch.meshgrid(
+        #         torch.linspace(-step_y*(patch_size//2 - 0.5*is_even),step_y*(patch_size//2 - 0.5*is_even),patch_size),
+        #         torch.linspace(-step_x*(patch_size//2 - 0.5*is_even),step_x*(patch_size//2 - 0.5*is_even),patch_size),
+        #     )
     elif 'same for even and odd' and True:
         mesh_xy = torch.meshgrid(
-                torch.linspace(-step_x*(patch_size//2),step_x*(patch_size//2),patch_size),
-                torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size),
+                torch.linspace(-step_x*(-1 + patch_size//2) - 0.5*step_x ,step_x*(-1 + patch_size//2) + 0.5*step_x,patch_size),
+                torch.linspace(-step_y*(-1 + patch_size//2) - 0.5*step_y,step_y*(-1 + patch_size//2) + 0.5*step_y,patch_size),
                 indexing = 'xy'
             )        
         mesh_x,mesh_y = mesh_xy
