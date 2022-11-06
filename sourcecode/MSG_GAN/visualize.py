@@ -50,16 +50,16 @@ def visualize(msg_gan,epoch,i,
         for k,(f,ps) in enumerate(zip(flow,msg_gan.patch_sizes)):
             H,W = f.shape[-2:]
             step_y = (1. - (-1.))/(H - 1)
-            half_step_y = step_y/2.
+            # half_step_y = step_y/2.
             step_x = (1. - (-1.))/(W- 1)
-            half_step_x = step_x/2.
+            # half_step_x = step_x/2.
             assert (ps % 2 == 0), 'this expression only valid for even patch sizes'
             X,Y = th.meshgrid(
-                th.linspace(-1 + half_step_x,1 -  half_step_x,W),
-                th.linspace(-1 + half_step_y ,1 - half_step_y,H),
+                th.linspace(-step_x*(-1 + W//2) - 0.5*step_x ,step_x*(-1 + W//2) + 0.5*step_x,W),
+                th.linspace(-step_y*(-1 + H//2) - 0.5*step_y,step_y*(-1 + H//2) + 0.5*step_y,H),
                 indexing = 'xy'
             )
-            new_f = th.stack([Y,X],dim=-1)
+            new_f = th.stack([X,Y],dim=-1)
             new_f = new_f.permute(2,0,1)[None,...]
             new_f = new_f.to(device)
             assert new_f.shape == flow[k].shape

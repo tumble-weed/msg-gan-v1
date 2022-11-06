@@ -135,20 +135,24 @@ def patch_sample(flow,img,patch_size):
             )        
         mesh_x,mesh_y = mesh_xy
     # import pdb;pdb.set_trace()
-    mesh = torch.stack([mesh_y,mesh_x],dim=-1)
+    # flow is (x,y) not (y,x) https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html
+    mesh = torch.stack([mesh_x,mesh_y],dim=-1)
     mesh = mesh.to(device)
     flow = flow.permute(0,2,3,1)
-    new_flow[...,0] = flow[:,:,None,:,None,0] + mesh[None,None,:,None,:,0]
-    new_flow[...,1] = flow[:,:,None,:,None,1] + mesh[None,None,:,None,:,1]
+
+    new_flow[...,0] = torch.zeros_like(flow[:,:,None,:,None,0]) + mesh[None,None,:,None,:,0]
+    new_flow[...,1] = torch.zeros_like(flow[:,:,None,:,None,1]) + mesh[None,None,:,None,:,1]
 
 #     new_flow = new_flow.permute((0,2,3,1,4,5))
 #     new_flow = torch.flatten(new_flow,start_dim=0,end_dim=2)
+
     new_flow = torch.reshape(new_flow,(N,(fH)*patch_size,(fW)*patch_size,2))
     patches = torch.nn.functional.grid_sample(img,new_flow)
     patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
-    if img.shape[-1] >= 256:
-        import pdb;pdb.set_trace()
+
     patches = patches.permute(0,1,2,4,3,5)
+    # if img.shape[-1] >= 256:
+    #     import pdb;pdb.set_trace()
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
     # patch_size = 1;print('setting patch size to 1')
