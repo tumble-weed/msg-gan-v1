@@ -73,11 +73,12 @@ def visualize(msg_gan,epoch,i,
         # import pdb;pdb.set_trace()
         flow = new_flow
         #=================================================
-        print('in visualize setting all ps to 2')
-        PS = 2
+        # print('in visualize setting all ps to 2')
+        # PS = 2
         # import pdb;pdb.set_trace()
-        fake_sample_256 = flow_to_rgb(flow[-1],PS,msg_gan.stride,F.interpolate(msg_gan.ref,flow[-1].shape[-2:]))
-        fake_samples = [flow_to_rgb(f,PS,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f,ps in zip(flow,msg_gan.patch_sizes)]        
+        # fake_sample_256 = flow_to_rgb(flow[-1],PS,msg_gan.stride,F.interpolate(msg_gan.ref,flow[-1].shape[-2:]))
+        #=================================================
+        fake_samples = [flow_to_rgb(f,ps,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f,ps in zip(flow,msg_gan.patch_sizes)]        
         assert fake_samples[-1].shape == real_images[-1].shape
         msg_gan.create_grid(fake_samples, gen_img_files)
         flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
