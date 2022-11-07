@@ -115,12 +115,21 @@ def patch_sample(flow,img,patch_size):
         #         torch.linspace(-step_x*(patch_size//2 - 0.5*is_even),step_x*(patch_size//2 - 0.5*is_even),patch_size),
         #     )
     elif 'same for even and odd' and True:
-        mesh_xy = torch.meshgrid(
-                torch.linspace(-step_x*(-1 + patch_size//2) - 0.5*step_x ,step_x*(-1 + patch_size//2) + 0.5*step_x,patch_size),
-                torch.linspace(-step_y*(-1 + patch_size//2) - 0.5*step_y,step_y*(-1 + patch_size//2) + 0.5*step_y,patch_size),
-                indexing = 'xy'
-            )        
+        if patch_size > 1:
+            mesh_xy = torch.meshgrid(
+                    torch.linspace(-step_x*(-1 + patch_size//2) - 0.5*step_x ,step_x*(-1 + patch_size//2) + 0.5*step_x,patch_size),
+                    torch.linspace(-step_y*(-1 + patch_size//2) - 0.5*step_y,step_y*(-1 + patch_size//2) + 0.5*step_y,patch_size),
+                    indexing = 'xy'
+                )        
+        else:
+            mesh_xy = torch.zeros(1,1).to(device),torch.zeros(1,1).to(device)
         mesh_x,mesh_y = mesh_xy
+        '''
+        import inspect
+        if 'visualize' in inspect.currentframe().f_back.f_back.__repr__():
+            if max(img.shape[-2:]) > 256:
+                import pdb;pdb.set_trace()
+        '''
     # import pdb;pdb.set_trace()
     # flow is (x,y) not (y,x) https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html
     mesh = torch.stack([mesh_x,mesh_y],dim=-1)
@@ -134,7 +143,7 @@ def patch_sample(flow,img,patch_size):
 #     new_flow = torch.flatten(new_flow,start_dim=0,end_dim=2)
 
     new_flow = torch.reshape(new_flow,(N,(fH)*patch_size,(fW)*patch_size,2))
-    patches = torch.nn.functional.grid_sample(img,new_flow)
+    patches = torch.nn.functional.grid_sample(img,new_flow,align_corners=True,padding_mode="border")
     patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
 
     patches = patches.permute(0,1,2,4,3,5)

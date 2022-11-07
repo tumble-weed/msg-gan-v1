@@ -363,7 +363,7 @@ class MSG_GAN:
         # generate a batch of samples
         fake_flow = self.gen(noise)
         fake_samples = [flow_to_rgb(flow,ps,self.stride,
-        F.interpolate(self.ref,flow.shape[-2:])) for flow,ps in zip(fake_flow,self.patch_sizes)]
+        F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
 
         loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
@@ -388,7 +388,7 @@ class MSG_GAN:
 
         # generate a batch of samples
         fake_flow = self.gen(noise)
-        fake_samples = [flow_to_rgb(flow,ps,self.stride,F.interpolate(self.ref,flow.shape[-2:])) for flow,ps in zip(fake_flow,self.patch_sizes)]
+        fake_samples = [flow_to_rgb(flow,ps,self.stride,F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
         loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
 
         # optimize discriminator
