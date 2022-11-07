@@ -116,14 +116,28 @@ def patch_sample(flow,img,patch_size):
         #     )
     elif 'same for even and odd' and True:
         if patch_size > 1:
+            '''
             mesh_xy = torch.meshgrid(
                     torch.linspace(-step_x*(-1 + patch_size//2) - 0.5*step_x ,step_x*(-1 + patch_size//2) + 0.5*step_x,patch_size),
                     torch.linspace(-step_y*(-1 + patch_size//2) - 0.5*step_y,step_y*(-1 + patch_size//2) + 0.5*step_y,patch_size),
                     indexing = 'xy'
                 )        
+            '''
+            # print('1 larger than mesh')
+            mesh_xy = torch.meshgrid(
+                    
+                    torch.linspace(
+                        -step_x*(patch_size//2) ,step_x*(patch_size//2),patch_size+int(patch_size%2 == 0)),
+
+                    torch.linspace(-step_y*(patch_size//2),step_y*(patch_size//2),patch_size+int(patch_size%2 == 0)),
+                    
+                    indexing = 'xy'
+                )        
         else:
             mesh_xy = torch.zeros(1,1).to(device),torch.zeros(1,1).to(device)
         mesh_x,mesh_y = mesh_xy
+        if patch_size%2 == 0:
+            mesh_x,mesh_y = mesh_x[...,:-1,:-1],mesh_y[...,:-1,:-1]
         '''
         import inspect
         if 'visualize' in inspect.currentframe().f_back.f_back.__repr__():
