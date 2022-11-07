@@ -83,21 +83,7 @@ def patch_sample(flow,img,patch_size):
 #             fake_flow.shape = N,2,H,W
     device = flow.device
     # import pdb;pdb.set_trace()
-    if False:
-        img_xy = torch.meshgrid(
-            torch.arange(img.shape[3],device=device).float(),
-            torch.arange(img.shape[2],device=device).float(),
-            indexing = 'xy'
-        )
-        img_x,img_y = img_xy
-        img = torch.stack([img_y,img_x],dim=0)
-        
-        img = torch.cat(
-            [img,
-            torch.zeros_like(img[:1]),],
-            dim =0
-        )[None,...]
-        print('setting img to arange, to see how far are patches being pulled from')
+
     
     N,_,fH,fW = flow.shape
     H,W = img.shape[-2:]
@@ -156,7 +142,7 @@ def patch_sample(flow,img,patch_size):
     #     import pdb;pdb.set_trace()
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
-    # patch_size = 1;print('setting patch size to 1')
+    patch_size = 1;print('setting patch size to 1')
     if 'heterogenous for even and odd' and True:
         if patch_size > 1:
             if patch_size % 2 == 1:
@@ -174,11 +160,31 @@ def flow_to_rgb(flow,patch_size,stride,img):
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
     # if max(img.shape[-2:]) >= 256:
     #     import pdb;pdb.set_trace()
+    if True:
+        device = img.device
+        img_xy = torch.meshgrid(
+            torch.arange(img.shape[3],device=device).float(),
+            torch.arange(img.shape[2],device=device).float(),
+            indexing = 'xy'
+        )
+        img_x,img_y = img_xy
+        img = torch.stack([img_y,img_x],dim=0)
+        
+        img = torch.cat(
+            [img,
+            torch.zeros_like(img[:1]),],
+            dim =0
+        )[None,...]
+        print('setting img to arange, to see how far are patches being pulled from')    
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape
     fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
     # fake = img; print('setting fake to be img')
+    import inspect;
+    if 'visualize' in inspect.currentframe().f_back.__repr__():
+        if max(fake.shape[-2:]) >=  256:
+            import pdb;pdb.set_trace()
     return fake
 '''
 # for making an image from fake_flow
