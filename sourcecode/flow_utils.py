@@ -172,8 +172,8 @@ def flow_to_rgb(flow,patch_size,stride,img):
     elif 'same for even and odd' and False:
         assert False,'will struggle when end is positive'
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
-    if max(img.shape[-2:]) >= 256:
-        import pdb;pdb.set_trace()
+    # if max(img.shape[-2:]) >= 256:
+    #     import pdb;pdb.set_trace()
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape
