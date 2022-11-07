@@ -141,8 +141,8 @@ def patch_sample(flow,img,patch_size):
     mesh = mesh.to(device)
     flow = flow.permute(0,2,3,1)
 
-    new_flow[...,0] = torch.zeros_like(flow[:,:,None,:,None,0]) + mesh[None,None,:,None,:,0]
-    new_flow[...,1] = torch.zeros_like(flow[:,:,None,:,None,1]) + mesh[None,None,:,None,:,1]
+    new_flow[...,0] = (flow[:,:,None,:,None,0]) + mesh[None,None,:,None,:,0]
+    new_flow[...,1] = (flow[:,:,None,:,None,1]) + mesh[None,None,:,None,:,1]
 
 #     new_flow = new_flow.permute((0,2,3,1,4,5))
 #     new_flow = torch.flatten(new_flow,start_dim=0,end_dim=2)
@@ -170,6 +170,7 @@ def flow_to_rgb(flow,patch_size,stride,img):
                 flow = flow[:,:,start:end,start:end]
 
     elif 'same for even and odd' and False:
+        assert False,'will struggle when end is positive'
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
     if max(img.shape[-2:]) >= 256:
         import pdb;pdb.set_trace()
