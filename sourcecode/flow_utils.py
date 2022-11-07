@@ -160,12 +160,19 @@ def flow_to_rgb(flow,patch_size,stride,img):
     if 'heterogenous for even and odd' and True:
         if patch_size > 1:
             if patch_size % 2 == 1:
-                flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
+                start = patch_size//2
+                end = -(patch_size//2)
+                flow = flow[:,:,start:end,start:end]
             else:
-                flow = flow[:,:,(patch_size//2):-(patch_size//2)+1,patch_size//2:-(patch_size//2) + 1]
+                start = (patch_size//2)
+                end = -(patch_size//2)+1
+                end = end if (end < 0) else None
+                flow = flow[:,:,start:end,start:end]
 
     elif 'same for even and odd' and False:
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
+    if max(img.shape[-2:]) >= 256:
+        import pdb;pdb.set_trace()
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape
