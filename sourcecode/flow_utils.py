@@ -184,16 +184,18 @@ def flow_to_rgb(flow,patch_size,stride,img):
             torch.zeros_like(img[:1]),],
             dim =0
         )[None,...]
-        print('setting img to arange, to see how far are patches being pulled from')    
+        # print('setting img to arange, to see how far are patches being pulled from')    
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape
     fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
     # fake = img; print('setting fake to be img')
+    '''
     import inspect;
     if 'visualize' in inspect.currentframe().f_back.__repr__():
         if max(fake.shape[-2:]) >=  256:
             import pdb;pdb.set_trace()
+    '''
     return fake
 '''
 # for making an image from fake_flow
