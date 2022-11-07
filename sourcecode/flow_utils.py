@@ -170,6 +170,7 @@ def flow_to_rgb(flow,patch_size,stride,img):
     # img_shape = real_cpu.shape
     img_shape = img.shape
     fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
+    # fake = img; print('setting fake to be img')
     return fake
 '''
 # for making an image from fake_flow

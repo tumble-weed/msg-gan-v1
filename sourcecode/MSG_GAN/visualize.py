@@ -54,9 +54,14 @@ def visualize(msg_gan,epoch,i,
             step_x = (1. - (-1.))/(W- 1)
             # half_step_x = step_x/2.
             assert (ps % 2 == 0), 'this expression only valid for even patch sizes'
+            # X,Y = th.meshgrid(
+            #     th.linspace(-step_x*(-1 + W//2) - 0.5*step_x ,step_x*(-1 + W//2) + 0.5*step_x,W),
+            #     th.linspace(-step_y*(-1 + H//2) - 0.5*step_y,step_y*(-1 + H//2) + 0.5*step_y,H),
+            #     indexing = 'xy'
+            # )
             X,Y = th.meshgrid(
-                th.linspace(-step_x*(-1 + W//2) - 0.5*step_x ,step_x*(-1 + W//2) + 0.5*step_x,W),
-                th.linspace(-step_y*(-1 + H//2) - 0.5*step_y,step_y*(-1 + H//2) + 0.5*step_y,H),
+                th.linspace(-1.,1.,W),
+                th.linspace(-1.,1.,H),
                 indexing = 'xy'
             )
             new_f = th.stack([X,Y],dim=-1)
@@ -68,12 +73,17 @@ def visualize(msg_gan,epoch,i,
         # import pdb;pdb.set_trace()
         flow = new_flow
         #=================================================
-        fake_samples = [flow_to_rgb(f,ps,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f,ps in zip(flow,msg_gan.patch_sizes)]
+        print('in visualize setting all ps to 1')
+
+        import pdb;pdb.set_trace()
+        flow_to_rgb(flow[-1],3,msg_gan.stride,F.interpolate(msg_gan.ref,flow[-1].shape[-2:]))
+        fake_samples = [flow_to_rgb(f,3,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:])) for f,ps in zip(flow,msg_gan.patch_sizes)]        
         assert fake_samples[-1].shape == real_images[-1].shape
         msg_gan.create_grid(fake_samples, gen_img_files)
         flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
         # will have to remap to tensor for create grid to work
         flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
+        
         msg_gan.create_grid(flow, flow_img_files)
     
     # if epoch != 1:
