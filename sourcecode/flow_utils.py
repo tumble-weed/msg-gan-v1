@@ -151,7 +151,7 @@ def patch_sample(flow,img,patch_size):
     #     import pdb;pdb.set_trace()
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
-    patch_size = 1;print('setting patch size to 1')
+    # patch_size = 1;print('setting patch size to 1')
     if 'heterogenous for even and odd' and True:
         if patch_size > 1:
             if patch_size % 2 == 1:
@@ -169,7 +169,7 @@ def flow_to_rgb(flow,patch_size,stride,img):
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
     # if max(img.shape[-2:]) >= 256:
     #     import pdb;pdb.set_trace()
-    if True:
+    if False:
         device = img.device
         img_xy = torch.meshgrid(
             torch.arange(img.shape[3],device=device).float(),
@@ -184,7 +184,7 @@ def flow_to_rgb(flow,patch_size,stride,img):
             torch.zeros_like(img[:1]),],
             dim =0
         )[None,...]
-        # print('setting img to arange, to see how far are patches being pulled from')    
+        print('setting img to arange, to see how far are patches being pulled from')    
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
     # img_shape = real_cpu.shape
     img_shape = img.shape
