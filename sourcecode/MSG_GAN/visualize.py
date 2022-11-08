@@ -43,35 +43,36 @@ def visualize(msg_gan,epoch,i,
         flow = msg_gan.gen(fixed_input)
         assert flow[-1].shape[-2:] == real_images[-1].shape[-2:]
         #=================================================
-        device = fixed_input.device
-        print('hacking flow to yield original image back')
-        new_flow = []
-        assert len(flow) == len(msg_gan.patch_sizes)
-        for k,(f,ps) in enumerate(zip(flow,msg_gan.patch_sizes)):
-            H,W = f.shape[-2:]
-            step_y = (1. - (-1.))/(H - 1)
-            # half_step_y = step_y/2.
-            step_x = (1. - (-1.))/(W- 1)
-            # half_step_x = step_x/2.
-            assert (ps % 2 == 0), 'this expression only valid for even patch sizes'
-            # X,Y = th.meshgrid(
-            #     th.linspace(-step_x*(-1 + W//2) - 0.5*step_x ,step_x*(-1 + W//2) + 0.5*step_x,W),
-            #     th.linspace(-step_y*(-1 + H//2) - 0.5*step_y,step_y*(-1 + H//2) + 0.5*step_y,H),
-            #     indexing = 'xy'
-            # )
-            X,Y = th.meshgrid(
-                th.linspace(-1.,1.,W),
-                th.linspace(-1.,1.,H),
-                indexing = 'xy'
-            )
-            new_f = th.stack([X,Y],dim=-1)
-            new_f = new_f.permute(2,0,1)[None,...]
-            new_f = new_f.to(device)
-            assert new_f.shape == flow[k].shape
-            new_flow.append(new_f)
+        if False and 'hacking flow to yield original image back':
+            device = fixed_input.device
+            print('hacking flow to yield original image back')
+            new_flow = []
+            assert len(flow) == len(msg_gan.patch_sizes)
+            for k,(f,ps) in enumerate(zip(flow,msg_gan.patch_sizes)):
+                H,W = f.shape[-2:]
+                step_y = (1. - (-1.))/(H - 1)
+                # half_step_y = step_y/2.
+                step_x = (1. - (-1.))/(W- 1)
+                # half_step_x = step_x/2.
+                assert (ps % 2 == 0), 'this expression only valid for even patch sizes'
+                # X,Y = th.meshgrid(
+                #     th.linspace(-step_x*(-1 + W//2) - 0.5*step_x ,step_x*(-1 + W//2) + 0.5*step_x,W),
+                #     th.linspace(-step_y*(-1 + H//2) - 0.5*step_y,step_y*(-1 + H//2) + 0.5*step_y,H),
+                #     indexing = 'xy'
+                # )
+                X,Y = th.meshgrid(
+                    th.linspace(-1.,1.,W),
+                    th.linspace(-1.,1.,H),
+                    indexing = 'xy'
+                )
+                new_f = th.stack([X,Y],dim=-1)
+                new_f = new_f.permute(2,0,1)[None,...]
+                new_f = new_f.to(device)
+                assert new_f.shape == flow[k].shape
+                new_flow.append(new_f)
+                # import pdb;pdb.set_trace()
             # import pdb;pdb.set_trace()
-        # import pdb;pdb.set_trace()
-        flow = new_flow
+            flow = new_flow
         #=================================================
         # print('in visualize setting all ps to 2')
         # PS = 2
