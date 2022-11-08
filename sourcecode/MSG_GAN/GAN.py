@@ -365,8 +365,8 @@ class MSG_GAN:
         fake_samples = [flow_to_rgb(flow,ps,self.stride,
         F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
-
-        loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
+        assert len(real_batch[self.min_scale:]) == len(fake_samples)
+        loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples,trends=self.trends)
 
         # optimize discriminator
         dis_optim.zero_grad()
@@ -389,7 +389,8 @@ class MSG_GAN:
         # generate a batch of samples
         fake_flow = self.gen(noise)
         fake_samples = [flow_to_rgb(flow,ps,self.stride,F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
-        loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples[self.min_scale:],trends=self.trends)
+        assert len(real_batch[self.min_scale:]) == len(fake_samples)
+        loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples,trends=self.trends)
 
         # optimize discriminator
         gen_optim.zero_grad()

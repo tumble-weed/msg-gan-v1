@@ -87,7 +87,18 @@ def visualize(msg_gan,epoch,i,
         flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
         
         msg_gan.create_grid(flow, flow_img_files)
-    
+        #=================================================
+        # plot losses
+        # import pdb;pdb.set_trace()
+        for lname in msg_gan.trends:
+            
+            plt.figure()
+            plt.plot(msg_gan.trends[lname])
+            plt.title(lname)
+            plt.draw()
+            plt.savefig(os.path.join(sample_dir,lname+'.png'))
+            plt.close()        
+        #=================================================
     # if epoch != 1:
     #     import pdb;pdb.set_trace()
 def visualize_optical_flow(flow):
