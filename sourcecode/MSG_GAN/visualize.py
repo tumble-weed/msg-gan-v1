@@ -82,11 +82,18 @@ def visualize(msg_gan,epoch,i,
         fake_samples = [flow_to_rgb(f,ps,msg_gan.stride,F.interpolate(msg_gan.ref,f.shape[-2:],mode='bilinear',align_corners=True)) for f,ps in zip(flow,msg_gan.patch_sizes)]        
         assert fake_samples[-1].shape == real_images[-1].shape
         msg_gan.create_grid(fake_samples, gen_img_files)
+        #=================================================
+        '''
         flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
         # will have to remap to tensor for create grid to work
         flow = [th.tensor(f).permute(2,0,1)[None,...] for f in flow]
         
         msg_gan.create_grid(flow, flow_img_files)
+        '''
+        #=================================================
+        sampling = [get_flow_sampling(f,img,patch_size) for (f,img,patch_size) in zip(flow,real_images,msg_gan.patch_sizes) ]
+        # flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
+        msg_gan.create_grid(sampling, flow_img_files)
         #=================================================
         # plot losses
         # import pdb;pdb.set_trace()
@@ -116,3 +123,17 @@ def visualize_optical_flow(flow):
     # cv2.imshow("colored flow", bgr)
     # return np.array()
     return rgb
+
+def get_flow_sampling(flow,img,patch_size):
+    import flow_utils
+    sampling,detached_flow = flow_utils.get_flow_sampling(flow,img,patch_size)
+    '''
+    (sampling*(sampling > 1).float()).sum().backward()
+    #TODO: actually this is a double derivative. but according to this expression
+    # we are taking the dd after flow
+    # and d before it, is this correct?
+    flow.backward(detached_flow.grad)
+    '''
+    return sampling
+    
+    

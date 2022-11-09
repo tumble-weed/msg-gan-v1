@@ -218,3 +218,15 @@ fake_patches = patch_sample(fake_flow,real_cpu[:1],patch_size = patch_size)
 img_shape = real_cpu.shape
 fake = combine_patches(fake_patches, (patch_size,patch_size), stride, (img_
 '''
+# based on https://stackoverflow.com/questions/66119892/partial-backwards-in-pytorch-graph
+def get_flow_sampling(flow,img,patch_size):
+    flow2 = flow.detach()
+    #TODO: should this be flow2 = ...requires_grad?
+    flow2.requires_grad_(True)
+    dummy_img = torch.ones_like(img).requires_grad_(True)
+    dummy_fake = flow_to_rgb(flow2,patch_size,stride,dummy_img)
+    dummy_fake.sum().backward(retain_graph = True)
+    sampling = dummy_img.grad
+    assert (sampling>=0.).all()
+    return sampling,flow2
+
