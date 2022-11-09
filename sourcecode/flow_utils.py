@@ -163,6 +163,9 @@ def patch_sample(flow,img,patch_size):
     patches = patches.permute(0,1,2,4,3,5)
     # if img.shape[-1] >= 256:
     #     import pdb;pdb.set_trace()
+    import inspect
+    if 'get_flow_sampling' in inspect.currentframe().f_back.f_back.__repr__():
+        import pdb;pdb.set_trace()    
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
     # patch_size = 1;print('setting patch size to 1')
@@ -210,6 +213,9 @@ def flow_to_rgb(flow,patch_size,stride,img):
         if max(fake.shape[-2:]) >=  256:
             import pdb;pdb.set_trace()
     '''
+    import inspect
+    if 'get_flow_sampling' in inspect.currentframe().f_back.__repr__():
+        import pdb;pdb.set_trace()
     return fake
 '''
 # for making an image from fake_flow
@@ -219,13 +225,14 @@ img_shape = real_cpu.shape
 fake = combine_patches(fake_patches, (patch_size,patch_size), stride, (img_
 '''
 # based on https://stackoverflow.com/questions/66119892/partial-backwards-in-pytorch-graph
-def get_flow_sampling(flow,img,patch_size):
+def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=1):
     flow2 = flow.detach()
     #TODO: should this be flow2 = ...requires_grad?
     flow2.requires_grad_(True)
-    dummy_img = torch.ones_like(img).requires_grad_(True)
+    dummy_img = torch.ones_like(img)
+    dummy_img.requires_grad_(True)
     dummy_fake = flow_to_rgb(flow2,patch_size,stride,dummy_img)
-    dummy_fake.sum().backward(retain_graph = True)
+    dummy_fake.sum().backward(retain_graph = retain_graph)
     sampling = dummy_img.grad
     assert (sampling>=0.).all()
     return sampling,flow2
