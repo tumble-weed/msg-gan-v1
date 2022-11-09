@@ -163,9 +163,11 @@ def patch_sample(flow,img,patch_size):
     patches = patches.permute(0,1,2,4,3,5)
     # if img.shape[-1] >= 256:
     #     import pdb;pdb.set_trace()
+    '''
     import inspect
     if 'get_flow_sampling' in inspect.currentframe().f_back.f_back.__repr__():
         import pdb;pdb.set_trace()    
+    '''
     return patches
 def flow_to_rgb(flow,patch_size,stride,img):
     # patch_size = 1;print('setting patch size to 1')
@@ -213,9 +215,11 @@ def flow_to_rgb(flow,patch_size,stride,img):
         if max(fake.shape[-2:]) >=  256:
             import pdb;pdb.set_trace()
     '''
+    '''
     import inspect
     if 'get_flow_sampling' in inspect.currentframe().f_back.__repr__():
         import pdb;pdb.set_trace()
+    '''
     return fake
 '''
 # for making an image from fake_flow

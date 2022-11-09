@@ -90,10 +90,7 @@ def visualize(msg_gan,epoch,i,
         
         msg_gan.create_grid(flow, flow_img_files)
         '''
-        #=================================================
-        sampling = [get_flow_sampling(f,img,patch_size) for (f,img,patch_size) in zip(flow,real_images,msg_gan.patch_sizes) ]
-        # flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
-        msg_gan.create_grid(sampling, flow_img_files)
+
         #=================================================
         # plot losses
         # import pdb;pdb.set_trace()
@@ -105,7 +102,11 @@ def visualize(msg_gan,epoch,i,
             plt.draw()
             plt.savefig(os.path.join(sample_dir,lname+'.png'))
             plt.close()        
-        #=================================================
+    #=================================================
+    sampling = [get_flow_sampling(f,img,patch_size) for (f,img,patch_size) in zip(flow,real_images,msg_gan.patch_sizes) ]
+    # flow = [visualize_optical_flow(tensor_to_numpy(f.permute(0,2,3,1))[0]) for f in flow]
+    msg_gan.create_grid(sampling, flow_img_files)        
+    #=================================================        
     # if epoch != 1:
     #     import pdb;pdb.set_trace()
 def visualize_optical_flow(flow):
