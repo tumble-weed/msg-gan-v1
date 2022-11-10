@@ -239,5 +239,6 @@ def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=1):
     dummy_fake.sum().backward(retain_graph = retain_graph)
     sampling = dummy_img.grad
     assert (sampling>=0.).all()
+    # print('see maximum value of sampling');import pdb;pdb.set_trace()
     return sampling,flow2
 

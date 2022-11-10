@@ -391,9 +391,21 @@ class MSG_GAN:
         fake_samples = [flow_to_rgb(flow,ps,self.stride,F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
         assert len(real_batch[self.min_scale:]) == len(fake_samples)
         loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples,trends=self.trends)
-
         # optimize discriminator
         gen_optim.zero_grad()
+        #=====================================================
+        from flow_utils import get_flow_sampling
+        # flow diversity loss
+        for j,(res_flow,res_img,res_patch_size) in enumerate(zip(fake_flow,real_batch[self.min_scale:],self.patch_sizes)):
+            flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True,stride=1)
+            sampling_norm = flow_sampling.norm()
+            # this will populate the detached_flow grad
+            sampling_norm.backward()
+            def add_flow_norm_grad(g,detach_flow=detached_flow):
+                g + detached_flow.grad
+            res_flow.register_hook(add_flow_norm_grad)
+            trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
+        #=====================================================
         loss.backward()
         gen_optim.step()
 
