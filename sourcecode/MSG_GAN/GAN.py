@@ -400,7 +400,7 @@ class MSG_GAN:
             flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True,stride=1)
             sampling_norm = flow_sampling.norm()
             # this will populate the detached_flow grad
-            sampling_norm.backward()
+            sampling_norm.backward(retain_graph = True)
             def add_flow_norm_grad(g,detach_flow=detached_flow):
                 g + detached_flow.grad
             res_flow.register_hook(add_flow_norm_grad)
