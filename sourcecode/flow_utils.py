@@ -160,9 +160,14 @@ def patch_sample(flow,img,patch_size):
     '''
     patches = torch.nn.functional.grid_sample(img,new_flow,align_corners=True,padding_mode="border")
     '''
+    '''
     # https://raw.githubusercontent.com/NVlabs/stylegan2-ada-pytorch/main/torch_utils/ops/grid_sample_gradfix.py
     from grid_sample_gradfix import grid_sample
     patches = grid_sample(img,new_flow,align_corners=True,padding_mode="border")
+    patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
+    '''
+    from custom_grid_sample import bilinear_sampler
+    patches = bilinear_sampler(img,new_flow[...,0],new_flow[...,1])
     patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
 
     patches = patches.permute(0,1,2,4,3,5)

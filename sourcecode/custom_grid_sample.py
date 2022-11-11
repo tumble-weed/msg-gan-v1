@@ -36,7 +36,7 @@ def get_pixel_value(img, x, y):
     indices = torch.stack([b, y, x], 3)
     indices = indices.permute((0,3,1,2))
     out = torch.gather(img, indices)
-    assert out.shape == batch_size,nchan,height,width
+    assert out.shape == (batch_size,nchan,height,width)
     return out 
 
 '''
@@ -132,6 +132,7 @@ def bilinear_sampler(img, x, y):
     # rescale x and y to [0, W-1/H-1]
     # x = float(x)
     # y = float(y)
+    print('check if this needs to be max_x - 1');import pdb;pdb.set_trace()
     x = 0.5 * ((x + 1.0) * float(max_x-1))
     y = 0.5 * ((y + 1.0) * float(max_y-1))
 
