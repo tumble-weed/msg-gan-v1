@@ -132,9 +132,9 @@ def bilinear_sampler(img, x, y):
     # rescale x and y to [0, W-1/H-1]
     # x = float(x)
     # y = float(y)
-    print('check if this needs to be max_x - 1');import pdb;pdb.set_trace()
-    x = 0.5 * ((x + 1.0) * float(max_x-1))
-    y = 0.5 * ((y + 1.0) * float(max_y-1))
+    # print('check if this needs to be max_x - 1');import pdb;pdb.set_trace()
+    x = 0.5 * ((x + 1.0) * float(max_x))
+    y = 0.5 * ((y + 1.0) * float(max_y))
 
     # grab 4 nearest corner points for each (x_i, y_i)
     #x0 = tf.cast(tf.floor(x), 'int32')
