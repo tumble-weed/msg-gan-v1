@@ -1,5 +1,5 @@
 import torch
-
+import numpy as np
 '''
 def spatial_transformer_network(input_fmap, theta, out_dims=None, **kwargs):
     x_s = batch_grids[:, 0, :, :]
@@ -9,6 +9,62 @@ def spatial_transformer_network(input_fmap, theta, out_dims=None, **kwargs):
     out_fmap = bilinear_sampler(input_fmap, x_s, y_s)
     return out_fmap
 '''
+
+def gather_nd_torch(params, indices, batch_dim=1):
+    """ A PyTorch porting of tensorflow.gather_nd
+    This implementation can handle leading batch dimensions in params, see below for detailed explanation.
+
+    The majority of this implementation is from Michael Jungo @ https://stackoverflow.com/a/61810047/6670143
+    I just ported it compatible to leading batch dimension.
+
+    Args:
+      params: a tensor of dimension [b1, ..., bn, g1, ..., gm, c].
+      indices: a tensor of dimension [b1, ..., bn, x, m]
+      batch_dim: indicate how many batch dimension you have, in the above example, batch_dim = n.
+
+    Returns:
+      gathered: a tensor of dimension [b1, ..., bn, x, c].
+
+    Example:
+    >>> batch_size = 5
+    >>> inputs = torch.randn(batch_size, batch_size, batch_size, 4, 4, 4, 32)
+    >>> pos = torch.randint(4, (batch_size, batch_size, batch_size, 12, 3))
+    >>> gathered = gather_nd_torch(inputs, pos, batch_dim=3)
+    >>> gathered.shape
+    torch.Size([5, 5, 5, 12, 32])
+
+    >>> inputs_tf = tf.convert_to_tensor(inputs.numpy())
+    >>> pos_tf = tf.convert_to_tensor(pos.numpy())
+    >>> gathered_tf = tf.gather_nd(inputs_tf, pos_tf, batch_dims=3)
+    >>> gathered_tf.shape
+    TensorShape([5, 5, 5, 12, 32])
+
+    >>> gathered_tf = torch.from_numpy(gathered_tf.numpy())
+    >>> torch.equal(gathered_tf, gathered)
+    True
+    """
+    batch_dims = params.size()[:batch_dim]  # [b1, ..., bn]
+    batch_size = np.cumprod(list(batch_dims))[-1]  # b1 * ... * bn
+    c_dim = params.size()[-1]  # c
+    grid_dims = params.size()[batch_dim:-1]  # [g1, ..., gm]
+    n_indices = indices.size(-2)  # x
+    n_pos = indices.size(-1)  # m
+
+    # reshape leadning batch dims to a single batch dim
+    params = params.reshape(batch_size, *grid_dims, c_dim)
+    indices = indices.reshape(batch_size, n_indices, n_pos)
+    # indices = indices.reshape(batch_size, -1, n_pos)
+    # build gather indices
+    # gather for each of the data point in this "batch"
+    batch_enumeration = torch.arange(batch_size).unsqueeze(1)
+    gather_dims = [indices[:, :, i] for i in range(len(grid_dims))]
+    gather_dims.insert(0, batch_enumeration)
+    gathered = params[gather_dims]
+
+    # reshape back to the shape with leading batch dims
+    gathered = gathered.reshape(*batch_dims, n_indices, c_dim)
+    return gathered
+
 
 def get_pixel_value(img, x, y):
     """
@@ -26,16 +82,22 @@ def get_pixel_value(img, x, y):
     - output: tensor of shape (B, C, H, W)
     """
     device = x.device
-    batch_size,nchan,height,width = (x).shape
-
+    batch_size,height,width = (x).shape[:3]
+    nchan = img.shape[1]
     batch_idx = torch.arange(batch_size).to(device)
     batch_idx = batch_idx.reshape((batch_size, 1, 1))
     #TODO: tile in pytorch
     b = torch.tile(batch_idx, (1, height, width))
 
-    indices = torch.stack([b, y, x], 3)
-    indices = indices.permute((0,3,1,2))
-    out = torch.gather(img, indices)
+    # indices = torch.stack([b, y, x], 3)
+    indices = torch.stack([y, x], 3)
+    # indices = indices.permute((0,3,1,2))
+    # out = torch.gather(img, indices)
+    '''
+    out = gather_nd_torch(img.permute(0,2,3,1), indices, batch_dim=1)
+    '''
+    out = gather_nd_torch(img.permute(0,2,3,1), indices.flatten(start_dim=1,end_dim=2), batch_dim=1)
+    out = out.reshape(batch_size,nchan,height,width)
     assert out.shape == (batch_size,nchan,height,width)
     return out 
 
@@ -124,6 +186,8 @@ def bilinear_sampler(img, x, y):
     -------
     - out: interpolated images according to grids. Same size as grid.
     """
+    torch.cuda.empty_cache()
+    import gc;gc.collect()
     H,W = img.shape[-2:]
     max_y = int(H - 1)
     max_x = int(W - 1)
@@ -156,11 +220,11 @@ def bilinear_sampler(img, x, y):
     Ic = get_pixel_value(img, x1, y0)
     Id = get_pixel_value(img, x1, y1)
 
-    # recast as float for delta calculation
-    x0 = x0.float()
-    x1 = x1.float()
-    y0 = y0.float()
-    y1 = y1.float()
+    # # recast as float for delta calculation
+    # x0 = x0.float()
+    # x1 = x1.float()
+    # y0 = y0.float()
+    # y1 = y1.float()
 
     # calculate deltas
     wa = (x1-x) * (y1-y)
