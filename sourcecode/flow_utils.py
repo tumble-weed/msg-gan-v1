@@ -79,7 +79,8 @@ def sample_using_flow(flow,x,patch_size):
     patches = torch.transpose(patches,(0,1,3,2,4,5))
     return patches
 """
-def patch_sample(flow,img,patch_size):
+def patch_sample(flow,img,patch_size,
+mode='standard'):
 #             fake_flow.shape = N,2,H,W
     device = flow.device
     # import pdb;pdb.set_trace()
@@ -157,19 +158,23 @@ def patch_sample(flow,img,patch_size):
 #     new_flow = torch.flatten(new_flow,start_dim=0,end_dim=2)
 
     new_flow = torch.reshape(new_flow,(N,(fH)*patch_size,(fW)*patch_size,2))
-    '''
-    patches = torch.nn.functional.grid_sample(img,new_flow,align_corners=True,padding_mode="border")
-    '''
+    # '''
+    if mode == 'standard':
+        patches = torch.nn.functional.grid_sample(img,new_flow,align_corners=True,padding_mode="border")
+        patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
+    # '''
+    #============================================================
     '''
     # https://raw.githubusercontent.com/NVlabs/stylegan2-ada-pytorch/main/torch_utils/ops/grid_sample_gradfix.py
     from grid_sample_gradfix import grid_sample
     patches = grid_sample(img,new_flow,align_corners=True,padding_mode="border")
     patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
     '''
-    from custom_grid_sample import bilinear_sampler
-    patches = bilinear_sampler(img,new_flow[...,0],new_flow[...,1])
-    patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
-
+    if mode == 'custom':
+        from custom_grid_sample import bilinear_sampler
+        patches = bilinear_sampler(img,new_flow[...,0],new_flow[...,1])
+        patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
+    #============================================================
     patches = patches.permute(0,1,2,4,3,5)
     # if img.shape[-1] >= 256:
     #     import pdb;pdb.set_trace()
@@ -179,7 +184,7 @@ def patch_sample(flow,img,patch_size):
         import pdb;pdb.set_trace()    
     '''
     return patches
-def flow_to_rgb(flow,patch_size,stride,img):
+def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
     # patch_size = 1;print('setting patch size to 1')
     if 'heterogenous for even and odd' and True:
         if patch_size > 1:
@@ -214,7 +219,7 @@ def flow_to_rgb(flow,patch_size,stride,img):
             dim =0
         )[None,...]
         print('setting img to arange, to see how far are patches being pulled from')    
-    fake_patches = patch_sample(flow,img[:1],patch_size = patch_size)
+    fake_patches = patch_sample(flow,img[:1],patch_size = patch_size,mode=mode)
     # img_shape = real_cpu.shape
     img_shape = img.shape
     fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
@@ -245,7 +250,7 @@ def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=1):
     flow2.requires_grad_(True)
     dummy_img = torch.ones_like(img)
     dummy_img.requires_grad_(True)
-    dummy_fake = flow_to_rgb(flow2,patch_size,stride,dummy_img)
+    dummy_fake = flow_to_rgb(flow2,patch_size,stride,dummy_img,mode='custom')
     # https://lucainiaoge.github.io/download/PyTorch-create_graph-is-true_Tutorial_and_Example.pdf
     dummy_fake.sum().backward(create_graph = retain_graph)
     sampling = dummy_img.grad
