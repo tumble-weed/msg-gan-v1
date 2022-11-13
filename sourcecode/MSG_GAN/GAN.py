@@ -404,7 +404,7 @@ class MSG_GAN:
             def add_flow_norm_grad(g,detach_flow=detached_flow):
                 g + detached_flow.grad
             res_flow.register_hook(add_flow_norm_grad)
-            trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
+            self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
         #=====================================================
         loss.backward()
         gen_optim.step()
