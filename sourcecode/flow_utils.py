@@ -201,8 +201,10 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
     elif 'same for even and odd' and False:
         assert False,'will struggle when end is positive'
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
-    # if max(img.shape[-2:]) >= 256:
-    #     import pdb;pdb.set_trace()
+    if stride !=  1:
+        import pdb;pdb.set_trace()
+    flow = flow[...,::stride,::stride]
+
     if False:
         device = img.device
         img_xy = torch.meshgrid(
@@ -244,8 +246,9 @@ img_shape = real_cpu.shape
 fake = combine_patches(fake_patches, (patch_size,patch_size), stride, (img_
 '''
 # based on https://stackoverflow.com/questions/66119892/partial-backwards-in-pytorch-graph
-def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=1):
+def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
     flow2 = flow.detach()
+    # flow2 = flow2[...,::stride,::stride]
     #TODO: should this be flow2 = ...requires_grad?
     flow2.requires_grad_(True)
     dummy_img = torch.ones_like(img)

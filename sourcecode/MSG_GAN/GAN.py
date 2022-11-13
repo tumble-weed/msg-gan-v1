@@ -329,7 +329,7 @@ class MSG_GAN:
         from collections import defaultdict
         self.trends = defaultdict(list)
         self.largest_patch_size = patch_size
-        self.patch_sizes = list(reversed([self.largest_patch_size//(2**i) for i in range(depth)]))[self.min_scale:]
+        self.patch_sizes = list(reversed([1 + (self.largest_patch_size-1)//(2**i) for i in range(depth)]))[self.min_scale:]
         self.ref = ref
         self.stride = stride
     '''
@@ -397,7 +397,9 @@ class MSG_GAN:
         from flow_utils import get_flow_sampling
         # flow diversity loss
         for j,(res_flow,res_img,res_patch_size) in enumerate(zip(fake_flow,real_batch[self.min_scale:],self.patch_sizes)):
-            flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True,stride=1)
+            flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True
+            # ,stride=1
+            )
             sampling_norm = flow_sampling.norm()
             # this will populate the detached_flow grad
             sampling_norm.backward(retain_graph = True)
