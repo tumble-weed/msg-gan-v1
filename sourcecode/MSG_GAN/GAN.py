@@ -404,7 +404,8 @@ class MSG_GAN:
             # this will populate the detached_flow grad
             sampling_norm.backward(retain_graph = True)
             def add_flow_norm_grad(g,detach_flow=detached_flow):
-                g + detached_flow.grad
+                g = g + detached_flow.grad#[...,::2,::2]
+                return g
             res_flow.register_hook(add_flow_norm_grad)
             self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
         #=====================================================
