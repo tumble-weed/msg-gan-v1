@@ -201,8 +201,8 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
     elif 'same for even and odd' and False:
         assert False,'will struggle when end is positive'
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
-    if stride !=  1:
-        import pdb;pdb.set_trace()
+    # if stride !=  1:
+        # import pdb;pdb.set_trace()
     flow = flow[...,::stride,::stride]
 
     if False:

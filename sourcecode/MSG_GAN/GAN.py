@@ -400,14 +400,18 @@ class MSG_GAN:
             flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True
             # ,stride=1
             )
+            added_g = detached_flow.grad
+            detached_flow = None
             sampling_norm = flow_sampling.norm()
+            flow_sampling = None
             # this will populate the detached_flow grad
-            sampling_norm.backward(retain_graph = True)
-            def add_flow_norm_grad(g,detach_flow=detached_flow):
-                g = g + detached_flow.grad#[...,::2,::2]
+            sampling_norm.backward()
+            def add_flow_norm_grad(g,added_g=added_g):
+                g = g + added_g#[...,::2,::2]
                 return g
             res_flow.register_hook(add_flow_norm_grad)
             self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
+            fake_flow[j] = None
         #=====================================================
         loss.backward()
         gen_optim.step()
