@@ -370,7 +370,8 @@ class MSG_GAN:
 
         # optimize discriminator
         dis_optim.zero_grad()
-        loss.backward()
+        if True:
+            loss.backward()
         dis_optim.step()
 
         return loss.item()
@@ -509,8 +510,11 @@ class MSG_GAN:
                     extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
                 # gan_input = gan_input[...,None,None]
                 # optimize the discriminator:
-                dis_loss = self.optimize_discriminator(dis_optim, gan_input,
+                if True:
+                    dis_loss = self.optimize_discriminator(dis_optim, gan_input,
                                                        images, loss_fn)
+                else:
+                    dis_loss = 0 
 
                 # optimize the generator:
                 # resample from the latent noise
