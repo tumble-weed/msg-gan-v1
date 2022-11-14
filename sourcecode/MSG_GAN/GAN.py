@@ -495,7 +495,7 @@ class MSG_GAN:
             if epoch > 1:
                 print(i)
             for (i, batch) in enumerate(data, 1):
-
+                import pdb;pdb.set_trace()
                 # extract current batch of data for training
                 images = batch.to(self.device)
                 extracted_batch_size = images.shape[0]
@@ -524,9 +524,11 @@ class MSG_GAN:
                 outputs = self.gen(gan_input)
                 print('see effect of gan input shape');import pdb;pdb.set_trace()
                 '''
-                gen_loss = self.optimize_generator(gen_optim, gan_input,
+                if False:
+                    gen_loss = self.optimize_generator(gen_optim, gan_input,
                                                    images, loss_fn)
-
+                else:
+                    gen_loss = 0.
 
 
                 # provide a loss feedback
