@@ -73,7 +73,7 @@ def parse_arguments():
                         help="Depth of the GAN")
 
     parser.add_argument("--latent_size", action="store", type=int,
-                        default=256,
+                        default=64,
                         help="latent size for the generator")
 
     parser.add_argument("--batch_size", action="store", type=int,
