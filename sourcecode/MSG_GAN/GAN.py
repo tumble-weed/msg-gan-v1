@@ -365,7 +365,7 @@ class MSG_GAN:
         
         fake_samples = [flow_to_rgb(flow,ps,self.stride,
         F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
-        print('early return from optimize_discriminator'); return 0
+        # print('early return from optimize_discriminator'); return 0
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
         
         assert len(real_batch[self.min_scale:]) == len(fake_samples)
@@ -497,8 +497,20 @@ class MSG_GAN:
             # import pdb;pdb.set_trace()
             if epoch > 1:
                 print(i)
-            for (i, batch) in enumerate(data, 1):
+            # for (i, batch) in enumerate(data, 1):
+            batch = next(iter(data))
+            images = batch.to(self.device)
+            extracted_batch_size = images.shape[0]
+
+            # create a list of downsampled images from the real images:
+            images = [images] + [avg_pool2d(images, int(np.power(2, i)))
+                                    for i in range(1, self.depth)]
+            images = list(reversed(images))
+
+            for i in range(100):
+                
                 import pdb;pdb.set_trace()
+                '''
                 # extract current batch of data for training
                 images = batch.to(self.device)
                 extracted_batch_size = images.shape[0]
@@ -507,17 +519,17 @@ class MSG_GAN:
                 images = [images] + [avg_pool2d(images, int(np.power(2, i)))
                                      for i in range(1, self.depth)]
                 images = list(reversed(images))
-
+                '''
                 gan_input = th.randn(
                     extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
                 # gan_input = gan_input[...,None,None]
                 # optimize the discriminator:
-                if True:
+                if False:
                     dis_loss = self.optimize_discriminator(dis_optim, gan_input,
                                                        images, loss_fn)
                 else:
                     dis_loss = 0 
-                print('early return from train loop');continue
+                # print('early return from train loop');continue
                 # optimize the generator:
                 # resample from the latent noise
                 gan_input = th.randn(
@@ -530,7 +542,7 @@ class MSG_GAN:
                 outputs = self.gen(gan_input)
                 print('see effect of gan input shape');import pdb;pdb.set_trace()
                 '''
-                if False and 'dont optimize generator':
+                if True and 'optimize generator':
                     gen_loss = self.optimize_generator(gen_optim, gan_input,
                                                    images, loss_fn)
                 else:

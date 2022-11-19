@@ -33,9 +33,10 @@ def combine_patches(O, patch_size, stride, img_shape):
     divisor[divisor == 0] = 1.0
     combined =  (combined / divisor).squeeze(dim=0).permute(1, 2, 0)
     # convert from hwc to bchw format
-    del O; torch.cuda.empty_cache()
+    if False:
+        del O; torch.cuda.empty_cache()
     combined = combined.permute(2,0,1)[None,...]
-    print('fake return from combine_patches'); return torch.zeros(img_shape).to(device)
+    # print('fake return from combine_patches'); return torch.zeros(img_shape).to(device)
     return combined
 """
 # deprecated 
@@ -230,7 +231,7 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
     img_shape = img.shape
     
     fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
-    print('early return from flow_to_rgb');return flow
+    # print('early return from flow_to_rgb');return flow
     # fake = img; print('setting fake to be img')
     '''
     import inspect;
