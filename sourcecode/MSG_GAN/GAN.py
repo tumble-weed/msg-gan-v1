@@ -397,6 +397,7 @@ class MSG_GAN:
         # optimize discriminator
         gen_optim.zero_grad()
         #=====================================================
+
         from flow_utils import get_flow_sampling
         # flow diversity loss
         for j,(res_flow,res_img,res_patch_size) in enumerate(zip(fake_flow,real_batch[self.min_scale:],self.patch_sizes)):
@@ -415,6 +416,7 @@ class MSG_GAN:
             res_flow.register_hook(add_flow_norm_grad)
             self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
             fake_flow[j] = None
+        print('early return from optimize_generator');return 0
         #=====================================================
         loss.backward()
         gen_optim.step()
