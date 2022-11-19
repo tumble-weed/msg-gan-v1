@@ -367,13 +367,12 @@ class MSG_GAN:
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
         assert len(real_batch[self.min_scale:]) == len(fake_samples)
         loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples,trends=self.trends)
-
-        # optimize discriminator
-        dis_optim.zero_grad()
-        if True:
-            loss.backward()
-        dis_optim.step()
-
+        if False and 'no-grad':
+            # optimize discriminator
+            dis_optim.zero_grad()
+            if True:
+                loss.backward()
+            dis_optim.step()
         return loss.item()
 
     def optimize_generator(self, gen_optim, noise, real_batch, loss_fn):
@@ -528,13 +527,13 @@ class MSG_GAN:
                 outputs = self.gen(gan_input)
                 print('see effect of gan input shape');import pdb;pdb.set_trace()
                 '''
-                if False:
+                if False and 'dont optimize generator':
                     gen_loss = self.optimize_generator(gen_optim, gan_input,
                                                    images, loss_fn)
                 else:
                     gen_loss = 0.
 
-
+                print('early return from train loop');continue
                 # provide a loss feedback
                 # import pdb;pdb.set_trace()
                 # if i % int(limit / feedback_factor) == 0 or i == 1:
@@ -557,8 +556,8 @@ class MSG_GAN:
                     reses = [str(int(np.power(2, dep))) + "_x_"
                              + str(int(np.power(2, dep)))
                              for dep in range(2, self.depth + 2)]
-
-                    visualize(self,epoch,i,sample_dir,fixed_input,images[self.min_scale:])
+                    if False and 'dont visualize':
+                        visualize(self,epoch,i,sample_dir,fixed_input,images[self.min_scale:])
                     """
                     gen_img_files = [os.path.join(sample_dir, res, "gen_" +
                                                   str(epoch) + "_" +
