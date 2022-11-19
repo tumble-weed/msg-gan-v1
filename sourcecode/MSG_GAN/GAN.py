@@ -362,9 +362,12 @@ class MSG_GAN:
 
         # generate a batch of samples
         fake_flow = self.gen(noise)
+        
         fake_samples = [flow_to_rgb(flow,ps,self.stride,
         F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
+        print('early return from optimize_discriminator'); return 0
         fake_samples = list(map(lambda x: x.detach(), fake_samples))
+        
         assert len(real_batch[self.min_scale:]) == len(fake_samples)
         loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples,trends=self.trends)
         if False and 'no-grad':
@@ -514,7 +517,7 @@ class MSG_GAN:
                                                        images, loss_fn)
                 else:
                     dis_loss = 0 
-
+                print('early return from train loop');continue
                 # optimize the generator:
                 # resample from the latent noise
                 gan_input = th.randn(
@@ -533,7 +536,7 @@ class MSG_GAN:
                 else:
                     gen_loss = 0.
 
-                print('early return from train loop');continue
+                
                 # provide a loss feedback
                 # import pdb;pdb.set_trace()
                 # if i % int(limit / feedback_factor) == 0 or i == 1:

@@ -14,10 +14,11 @@ def combine_patches(O, patch_size, stride, img_shape):
     device = O.device
     channels = 3
     O = O.permute(1, 0, 2, 3).unsqueeze(0) # chan,batch_size,patch_size,patch_size
+    
     patches = O.contiguous().view(O.shape[0], O.shape[1], O.shape[2], -1) \
         .permute(0, 1, 3, 2) \
         .contiguous().view(1, channels * patch_size[0] * patch_size[0], -1)
-    
+    # print('early return from combine_patches'); return torch.zeros(img_shape).to(O.device)
     # batch_size,chan,Ypatch_size,-1
     # batch_size,chan,Xpatch_size,Ypatch_size
     #  -> 1, channels*Xpatch_size*Ypatch_size, H*W
@@ -32,7 +33,9 @@ def combine_patches(O, patch_size, stride, img_shape):
     divisor[divisor == 0] = 1.0
     combined =  (combined / divisor).squeeze(dim=0).permute(1, 2, 0)
     # convert from hwc to bchw format
+    del O; torch.cuda.empty_cache()
     combined = combined.permute(2,0,1)[None,...]
+    print('fake return from combine_patches'); return torch.zeros(img_shape).to(device)
     return combined
 """
 # deprecated 
@@ -185,6 +188,7 @@ mode='standard'):
     '''
     return patches
 def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
+    # print('early return from flow_to_rgb');return flow
     # patch_size = 1;print('setting patch size to 1')
     if 'heterogenous for even and odd' and True:
         if patch_size > 1:
@@ -224,7 +228,9 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size,mode=mode)
     # img_shape = real_cpu.shape
     img_shape = img.shape
+    
     fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
+    print('early return from flow_to_rgb');return flow
     # fake = img; print('setting fake to be img')
     '''
     import inspect;
@@ -237,6 +243,7 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
     if 'get_flow_sampling' in inspect.currentframe().f_back.__repr__():
         import pdb;pdb.set_trace()
     '''
+    # print('fake return from flow_to_rgb');return flow
     return fake
 '''
 # for making an image from fake_flow
