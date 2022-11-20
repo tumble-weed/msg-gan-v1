@@ -404,19 +404,23 @@ class MSG_GAN:
             flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True
             # ,stride=1
             )
-            added_g = detached_flow.grad
-            detached_flow = None
+            # added_g = detached_flow.grad
+            # detached_flow = None
             sampling_norm = flow_sampling.norm()
             flow_sampling = None
             # this will populate the detached_flow grad
             sampling_norm.backward()
-            def add_flow_norm_grad(g,added_g=added_g):
-                g = g + added_g#[...,::2,::2]
+            def add_flow_norm_grad(g,
+                # added_g=added_g
+                detached_flow = detached_flow
+                ):
+                # g = g + added_g#[...,::2,::2]
+                g = g + detached_flow.grad
                 return g
             res_flow.register_hook(add_flow_norm_grad)
             self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
             fake_flow[j] = None
-        print('early return from optimize_generator');return 0
+        # print('early return from optimize_generator');return 0
         #=====================================================
         loss.backward()
         gen_optim.step()
@@ -511,7 +515,7 @@ class MSG_GAN:
 
             for i in range(100):
                 
-                import pdb;pdb.set_trace()
+                # import pdb;pdb.set_trace()
                 '''
                 # extract current batch of data for training
                 images = batch.to(self.device)
@@ -526,7 +530,7 @@ class MSG_GAN:
                     extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
                 # gan_input = gan_input[...,None,None]
                 # optimize the discriminator:
-                if False:
+                if True:
                     dis_loss = self.optimize_discriminator(dis_optim, gan_input,
                                                        images, loss_fn)
                 else:
@@ -573,8 +577,8 @@ class MSG_GAN:
                     reses = [str(int(np.power(2, dep))) + "_x_"
                              + str(int(np.power(2, dep)))
                              for dep in range(2, self.depth + 2)]
-                    if False and 'dont visualize':
-                        visualize(self,epoch,i,sample_dir,fixed_input,images[self.min_scale:])
+                    # if True and 'dont visualize':
+                    visualize(self,epoch,i,sample_dir,fixed_input,images[self.min_scale:])
                     """
                     gen_img_files = [os.path.join(sample_dir, res, "gen_" +
                                                   str(epoch) + "_" +
