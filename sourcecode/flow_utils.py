@@ -33,8 +33,10 @@ def combine_patches(O, patch_size, stride, img_shape):
     divisor[divisor == 0] = 1.0
     combined =  (combined / divisor).squeeze(dim=0).permute(1, 2, 0)
     # convert from hwc to bchw format
+    '''
     if False:
         del O; torch.cuda.empty_cache()
+    '''
     combined = combined.permute(2,0,1)[None,...]
     # print('fake return from combine_patches'); return torch.zeros(img_shape).to(device)
     return combined

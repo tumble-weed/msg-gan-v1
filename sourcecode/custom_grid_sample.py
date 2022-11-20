@@ -186,8 +186,10 @@ def bilinear_sampler(img, x, y):
     -------
     - out: interpolated images according to grids. Same size as grid.
     """
+    '''
     torch.cuda.empty_cache()
     import gc;gc.collect()
+    '''
     H,W = img.shape[-2:]
     max_y = int(H - 1)
     max_x = int(W - 1)
