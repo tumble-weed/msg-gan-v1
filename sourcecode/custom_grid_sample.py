@@ -239,6 +239,10 @@ def bilinear_sampler(img, x, y):
     wc = wc.unsqueeze(1)
     wd = wd.unsqueeze(1)
 
+    assert all([(wa>=0).all(),
+                (wb>=0).all(),
+                (wc>=0).all(),
+                (wd>=0).all()])
     # compute output
     out = wa*Ia + wb*Ib + wc*Ib + wd*Id
     return out

@@ -264,10 +264,12 @@ def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
     dummy_img = torch.ones_like(img)
     dummy_img.requires_grad_(True)
     dummy_fake = flow_to_rgb(flow2,patch_size,stride,dummy_img,mode='custom')
+    '''
     if False:
         # https://lucainiaoge.github.io/download/PyTorch-create_graph-is-true_Tutorial_and_Example.pdf
         dummy_fake.sum().backward(create_graph = retain_graph)
         sampling = dummy_img.grad
+    '''
     sampling = torch.autograd.grad(dummy_fake.sum(), [dummy_img], 
     #grad_outputs = grad_outputs, 
     create_graph=retain_graph)[0]
