@@ -409,7 +409,7 @@ class MSG_GAN:
             sampling_norm = flow_sampling.norm()
             flow_sampling = None
             # this will populate the detached_flow grad
-            sampling_norm.backward()
+            (1e1*sampling_norm).backward()
             def add_flow_norm_grad(g,
                 # added_g=added_g
                 detached_flow = detached_flow

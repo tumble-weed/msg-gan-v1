@@ -272,8 +272,10 @@ def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
     #grad_outputs = grad_outputs, 
     create_graph=retain_graph)[0]
 
-    
-    assert (sampling>=0.).all()
+    try:    
+        assert (sampling>=0.).all()
+    except AssertionError as e:
+        import pdb;pdb.set_trace()
     # print('see maximum value of sampling');import pdb;pdb.set_trace()
     return sampling,flow2
 
