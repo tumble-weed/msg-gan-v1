@@ -199,6 +199,8 @@ def bilinear_sampler(img, x, y):
     # x = float(x)
     # y = float(y)
     # print('check if this needs to be max_x - 1');import pdb;pdb.set_trace()
+    x_pre = x
+    y_pre = y
     x = 0.5 * ((x + 1.0) * float(max_x))
     y = 0.5 * ((y + 1.0) * float(max_y))
 
