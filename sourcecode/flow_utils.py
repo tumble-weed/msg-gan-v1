@@ -156,10 +156,15 @@ mode='standard'):
     mesh = torch.stack([mesh_x,mesh_y],dim=-1)
     mesh = mesh.to(device)
     flow = flow.permute(0,2,3,1)
-
-    new_flow[...,0] = (flow[:,:,None,:,None,0]) + mesh[None,None,:,None,:,0]
-    new_flow[...,1] = (flow[:,:,None,:,None,1]) + mesh[None,None,:,None,:,1]
-
+    # to allow for a patch_size
+    # flow[...,0] = flow[...,0] * (1. - step_x*(patch_size//2))
+    # flow[...,1] = flow[...,1] * (1. - step_y*(patch_size//2))
+    new_flow[...,0] = (flow[:,:,None,:,None,0])* (1. - step_x*(patch_size//2)) + mesh[None,None,:,None,:,0]
+    new_flow[...,1] = (flow[:,:,None,:,None,1])* (1. - step_y*(patch_size//2)) + mesh[None,None,:,None,:,1]
+    try:
+        assert (new_flow <= 1).all() and (new_flow >= -1).all()
+    except AssertionError as e:
+        import pdb;pdb.set_trace()
 #     new_flow = new_flow.permute((0,2,3,1,4,5))
 #     new_flow = torch.flatten(new_flow,start_dim=0,end_dim=2)
 
