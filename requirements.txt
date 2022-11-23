@@ -1,1 +1,7 @@
 gdown
+scikit-image
+opencv-python
+matplotlib
+torch 
+torchvision 
+torchaudio
