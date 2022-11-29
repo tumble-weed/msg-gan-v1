@@ -406,16 +406,17 @@ class MSG_GAN:
             )
             # added_g = detached_flow.grad
             # detached_flow = None
-            sampling_norm = flow_sampling.norm()
+            # sampling_norm = flow_sampling.norm()
+            sampling_norm = ((flow_sampling * (flow_sampling > 1).float())**2).sum()
             flow_sampling = None
             # this will populate the detached_flow grad
-            (1e1*sampling_norm).backward()
+            (1e0*sampling_norm).backward()
             def add_flow_norm_grad(g,
                 # added_g=added_g
                 detached_flow = detached_flow
                 ):
                 # g = g + added_g#[...,::2,::2]
-                g = g + detached_flow.grad
+                g = g + th.clip(detached_flow.grad,-1,1)
                 return g
             res_flow.register_hook(add_flow_norm_grad)
             self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
