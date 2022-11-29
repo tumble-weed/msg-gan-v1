@@ -407,17 +407,21 @@ class MSG_GAN:
             # added_g = detached_flow.grad
             # detached_flow = None
             # sampling_norm = flow_sampling.norm()
-            sampling_norm = ((flow_sampling * (flow_sampling > 1).float())**2).sum()
-            M = flow_sampling.max()
+            M = flow_sampling.max().detach()
+            sampling_norm = (( (flow_sampling/M) * (flow_sampling > 1).float())**2).sum()
+            
+            if min(flow_sampling.shape[-2:]) >= 256:
+                print(M)
             flow_sampling = None
             # this will populate the detached_flow grad
-            (1e-3*sampling_norm).backward()
+            (1e-4*sampling_norm).backward()
             def add_flow_norm_grad(g,
                 # added_g=added_g
                 detached_flow = detached_flow
                 ):
                 # g = g + added_g#[...,::2,::2]
                 # g = g + th.clip(detached_flow.grad,-1,1)
+                assert th.allclose(g,th.zeros_like(g))
                 g = g + (detached_flow.grad)
                 return g
             res_flow.register_hook(add_flow_norm_grad)
