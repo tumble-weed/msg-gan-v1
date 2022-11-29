@@ -513,8 +513,8 @@ class MSG_GAN:
             images = [images] + [avg_pool2d(images, int(np.power(2, i)))
                                     for i in range(1, self.depth)]
             images = list(reversed(images))
-
-            for i in range(100):
+            n_batches = 10;print(f'n_batches:{n_batches}')
+            for i in range(n_batches):
                 
                 # import pdb;pdb.set_trace()
                 '''
@@ -559,9 +559,9 @@ class MSG_GAN:
                 # provide a loss feedback
                 # import pdb;pdb.set_trace()
                 # if i % int(limit / feedback_factor) == 0 or i == 1:
-                if  i >100:
+                if  i >n_batches:
                     import pdb;pdb.set_trace()
-                if (i == 99) or (i == 1):
+                if (i == n_batches) or (i == 1):
                     elapsed = time.time() - global_time
                     elapsed = str(datetime.timedelta(seconds=elapsed))
                     print("Elapsed [%s] batch: %d  d_loss: %f  g_loss: %f"
