@@ -408,30 +408,42 @@ class MSG_GAN:
             # detached_flow = None
             # sampling_norm = flow_sampling.norm()
             M = flow_sampling.max().detach()
-            sampling_norm = (( (flow_sampling/M) * (flow_sampling > 1).float())**2).sum()
+            # M = flow_sampling.median().detach()
+            # M = flow_sampling.mean().detach()
+            assert (flow_sampling >= 0 ).all()
+            sampling_norm = (( (flow_sampling/M) * (flow_sampling > 10000).float())**2).sum()
+            sampling_norm1 = (( (flow_sampling) * (flow_sampling > 10000).float())**2).sum()
             
             if min(flow_sampling.shape[-2:]) >= 256:
                 print(M)
             flow_sampling = None
             # this will populate the detached_flow grad
-            (1e-4*sampling_norm).backward()
+            (1e3*sampling_norm).backward()
             def add_flow_norm_grad(g,
                 # added_g=added_g
                 detached_flow = detached_flow
                 ):
                 # g = g + added_g#[...,::2,::2]
-                # g = g + th.clip(detached_flow.grad,-1,1)
+                
                 assert th.allclose(g,th.zeros_like(g))
+                # g = g + th.clip(detached_flow.grad,-10,10)
+                if min(g.shape[-2:]) >= 256:
+                    # import pdb;pdb.set_trace()
+                    print(
+                        (detached_flow.grad).abs().max(),(detached_flow.grad).abs().mean()
+                    )
                 g = g + (detached_flow.grad)
+                # assert th.allclose(g,th.zeros_like(g))
+                # import pdb;pdb.set_trace()
                 return g
             res_flow.register_hook(add_flow_norm_grad)
-            self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
+            self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm1.item())
             fake_flow[j] = None
         # print('early return from optimize_generator');return 0
         #=====================================================
         (0*loss).backward();print('making gan grad 0')
         gen_optim.step()
-
+        print(gen_optim.param_groups[0]['params'][0].grad.abs().mean())
         return loss.item()
 
     @staticmethod
