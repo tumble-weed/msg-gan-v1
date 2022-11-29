@@ -411,14 +411,14 @@ class MSG_GAN:
             # M = flow_sampling.median().detach()
             # M = flow_sampling.mean().detach()
             assert (flow_sampling >= 0 ).all()
-            sampling_norm = (( (flow_sampling/M) * (flow_sampling > 10000).float())**2).sum()
-            sampling_norm1 = (( (flow_sampling) * (flow_sampling > 10000).float())**2).sum()
+            sampling_norm = (( (flow_sampling/M) * (flow_sampling == flow_sampling.max()).float())**2).sum()
+            sampling_norm1 = (( (flow_sampling) * (flow_sampling == flow_sampling.max()).float())**2).sum()
             
             if min(flow_sampling.shape[-2:]) >= 256:
                 print(M)
             flow_sampling = None
             # this will populate the detached_flow grad
-            (1e3*sampling_norm).backward()
+            (1e1*sampling_norm).backward()
             def add_flow_norm_grad(g,
                 # added_g=added_g
                 detached_flow = detached_flow
