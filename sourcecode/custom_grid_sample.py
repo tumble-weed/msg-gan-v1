@@ -208,10 +208,11 @@ def bilinear_sampler(img, x, y):
     # grab 4 nearest corner points for each (x_i, y_i)
     #x0 = tf.cast(tf.floor(x), 'int32')
     x0 = x.floor().long()
-    x1 = x0 + 1
+    # x1 = x0 + 1
+    x1 = x.ceil().long()
     # y0 = tf.cast(tf.floor(y), 'int32')
     y0 = y.floor().long()
-    y1 = y0 + 1
+    y1 = y.ceil().long()
 
     # clip to range [0, H-1/W-1] to not violate img boundaries
     x0 = torch.clamp(x0, None, max_x)
@@ -242,6 +243,12 @@ def bilinear_sampler(img, x, y):
     wb = (1 - (x-x0)) * (1 - (y1-y))
     wc = (1 - (x1-x)) * (1 - (y-y0))
     wd = (1 - (x1-x)) * (1 - (y1-y))
+    wsum = wa + wb + wc + wd
+    wsum = wsum.detach()
+    wa = wa/wsum
+    wb = wb/wsum
+    wc = wc/wsum
+    wd = wd/wsum
 
     wa = wa.unsqueeze(1)
     wb = wb.unsqueeze(1)
@@ -252,6 +259,7 @@ def bilinear_sampler(img, x, y):
                 (wb>=0).all(),
                 (wc>=0).all(),
                 (wd>=0).all()])
+      assert torch.allclose(wa + wb+wc+wd,torch.ones_like(wa))
     except AssertionError:
       import pdb;pdb.set_trace()
     # compute output
