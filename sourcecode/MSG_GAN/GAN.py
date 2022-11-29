@@ -408,22 +408,24 @@ class MSG_GAN:
             # detached_flow = None
             # sampling_norm = flow_sampling.norm()
             sampling_norm = ((flow_sampling * (flow_sampling > 1).float())**2).sum()
+            M = flow_sampling.max()
             flow_sampling = None
             # this will populate the detached_flow grad
-            (1e0*sampling_norm).backward()
+            (1e-3*sampling_norm).backward()
             def add_flow_norm_grad(g,
                 # added_g=added_g
                 detached_flow = detached_flow
                 ):
                 # g = g + added_g#[...,::2,::2]
-                g = g + th.clip(detached_flow.grad,-1,1)
+                # g = g + th.clip(detached_flow.grad,-1,1)
+                g = g + (detached_flow.grad)
                 return g
             res_flow.register_hook(add_flow_norm_grad)
             self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm.item())
             fake_flow[j] = None
         # print('early return from optimize_generator');return 0
         #=====================================================
-        loss.backward()
+        (0*loss).backward();print('making gan grad 0')
         gen_optim.step()
 
         return loss.item()
