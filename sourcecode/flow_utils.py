@@ -262,6 +262,7 @@ fake = combine_patches(fake_patches, (patch_size,patch_size), stride, (img_
 '''
 # based on https://stackoverflow.com/questions/66119892/partial-backwards-in-pytorch-graph
 def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
+    patch_size = 1;print('flow sampling patch_size is 1')
     flow2 = flow.detach()
     # flow2 = flow2[...,::stride,::stride]
     #TODO: should this be flow2 = ...requires_grad?

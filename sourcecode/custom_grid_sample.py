@@ -232,10 +232,16 @@ def bilinear_sampler(img, x, y):
     # y1 = y1.float()
 
     # calculate deltas
-    wa = (x1-x) * (y1-y)
-    wb = (x1-x) * (y-y0)
-    wc = (x-x0) * (y1-y)
-    wd = (x-x0) * (y-y0)
+    # wa = (x1-x) * (y1-y)
+    # wb = (x1-x) * (y-y0)
+    # wc = (x-x0) * (y1-y)
+    # wd = (x-x0) * (y-y0)
+
+    # calculate deltas
+    wa = (1 - (x-x0)) * (1 - (y-y0))
+    wb = (1 - (x-x0)) * (1 - (y1-y))
+    wc = (1 - (x1-x)) * (1 - (y-y0))
+    wd = (1 - (x1-x)) * (1 - (y1-y))
 
     wa = wa.unsqueeze(1)
     wb = wb.unsqueeze(1)
