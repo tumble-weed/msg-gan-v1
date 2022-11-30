@@ -159,6 +159,12 @@ mode='standard'):
     # to allow for a patch_size
     # flow[...,0] = flow[...,0] * (1. - step_x*(patch_size//2))
     # flow[...,1] = flow[...,1] * (1. - step_y*(patch_size//2))
+    import inspect
+    
+    prev_f = str(inspect.currentframe().f_back.f_back.f_code.co_name)
+    # if 'flow_sampling' in prev_f:
+    #     import pdb;pdb.set_trace()
+    # import pdb;pdb.set_trace()
     new_flow[...,0] = (flow[:,:,None,:,None,0])* (1. - step_x*(patch_size//2)) + mesh[None,None,:,None,:,0]
     new_flow[...,1] = (flow[:,:,None,:,None,1])* (1. - step_y*(patch_size//2)) + mesh[None,None,:,None,:,1]
     try:
@@ -215,6 +221,7 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
     # if stride !=  1:
         # import pdb;pdb.set_trace()
+    out_img_shape = (1,3) + flow.shape[-2:]
     flow = flow[...,::stride,::stride]
 
     if False:
@@ -233,11 +240,14 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
             dim =0
         )[None,...]
         print('setting img to arange, to see how far are patches being pulled from')    
+    # import pdb;pdb.set_trace()
     fake_patches = patch_sample(flow,img[:1],patch_size = patch_size,mode=mode)
     # img_shape = real_cpu.shape
-    img_shape = img.shape
+    # img_shape = img.shape
     
-    fake = combine_patches(fake_patches, (patch_size,patch_size), stride, img_shape)
+    # import pdb;pdb.set_trace()
+    fake = combine_patches(fake_patches, (patch_size,patch_size), stride, out_img_shape)
+    
     # print('early return from flow_to_rgb');return flow
     # fake = img; print('setting fake to be img')
     '''
@@ -262,8 +272,8 @@ fake = combine_patches(fake_patches, (patch_size,patch_size), stride, (img_
 '''
 # based on https://stackoverflow.com/questions/66119892/partial-backwards-in-pytorch-graph
 def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
-    patch_size = 1;print('flow sampling patch_size is 1')
     flow2 = flow.detach()
+    patch_size = 1;print('setting patch_size to 1')
     # flow2 = flow2[...,::stride,::stride]
     #TODO: should this be flow2 = ...requires_grad?
     flow2.requires_grad_(True)
@@ -286,4 +296,3 @@ def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
         import pdb;pdb.set_trace()
     # print('see maximum value of sampling');import pdb;pdb.set_trace()
     return sampling,flow2
-
