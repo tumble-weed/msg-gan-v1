@@ -74,6 +74,8 @@ class Generator(th.nn.Module):
         private helper for turning on the spectral normalization
         :return: None (has side effect)
         """
+        # print('not using spectral norm')
+        # return 
         from torch.nn.utils import spectral_norm
 
         if self.spectral_norm_mode is not None:
@@ -93,6 +95,8 @@ class Generator(th.nn.Module):
         private helper for turning off the spectral normalization
         :return: None (has side effect)
         """
+        print('not using spectral norm')
+        return 
         from torch.nn.utils import remove_spectral_norm
 
         if self.spectral_norm_mode is not None:
@@ -117,9 +121,30 @@ class Generator(th.nn.Module):
         outputs = []  # initialize to empty list
 
         y = x  # start the computational pipeline
-        for block, converter in zip(self.layers, self.flow_converters):
+        for j,(block, converter) in enumerate(zip(self.layers, self.flow_converters)):
             y = block(y)
-            outputs.append(tanh(converter(y)))
+
+            flow = tanh(converter(y))
+            # if  j == 0:
+            #     import pdb;pdb.set_trace()            
+            # import pdb;pdb.set_trace()
+            self.mixup = 0.
+            if self.mixup:
+                identity = th.meshgrid(
+                    
+                    th.linspace(-1,1,flow.shape[-1],
+                                device = flow.device
+                        ),
+                    th.linspace(-1,1,flow.shape[-2],
+                                device = flow.device),
+                    indexing = 'xy'
+                    
+                )
+                identity = th.stack(identity,dim=0).unsqueeze(0)
+                flow = self.mixup*flow + (1 -  self.mixup)*identity
+            outputs.append(flow)
+            
+                
         # print('see effect of gan input shape');import pdb;pdb.set_trace()
         return outputs[self.min_scale:]
 
@@ -252,7 +277,7 @@ class Discriminator(th.nn.Module):
 '''
 # from consingan
 class ConvBlock(th.nn.Sequential):
-    def __init__(self, in_channel, out_channel, ker_size, padd, batch_norm=True, generator=False):
+    def __init__(self, in_channel, out_channel, ker_size, padd, batch_norm=False, generator=False):
         super(ConvBlock,self).__init__()
         self.add_module('conv', th.nn.Conv2d(in_channel, out_channel, kernel_size=ker_size, stride=1, padding=padd))
         if generator and batch_norm:
@@ -370,6 +395,7 @@ class MSG_GAN:
         
         assert len(real_batch[self.min_scale:]) == len(fake_samples)
         loss = loss_fn.dis_loss(real_batch[self.min_scale:], fake_samples,trends=self.trends)
+        print('not stepping in dis')
         if False and 'no-grad':
             # optimize discriminator
             dis_optim.zero_grad()
@@ -388,62 +414,122 @@ class MSG_GAN:
         :param loss_fn: loss function to be used (object of GANLoss)
         :return: current loss
         """
-
+        global epoch,batch,sample_dir1
+        # import pdb;pdb.set_trace()
+        print('setting noise to 0');noise = th.zeros_like(noise)
         # generate a batch of samples
+        # with th.no_grad():
         fake_flow = self.gen(noise)
         fake_samples = [flow_to_rgb(flow,ps,self.stride,F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True)) for flow,ps in zip(fake_flow,self.patch_sizes)]
+        
         assert len(real_batch[self.min_scale:]) == len(fake_samples)
         loss = loss_fn.gen_loss(real_batch[self.min_scale:], fake_samples,trends=self.trends)
         # optimize discriminator
         gen_optim.zero_grad()
         #=====================================================
-
-        from flow_utils import get_flow_sampling
-        # flow diversity loss
-        for j,(res_flow,res_img,res_patch_size) in enumerate(zip(fake_flow,real_batch[self.min_scale:],self.patch_sizes)):
-            flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True
-            # ,stride=1
-            )
-            # added_g = detached_flow.grad
-            # detached_flow = None
-            # sampling_norm = flow_sampling.norm()
-            M = flow_sampling.max().detach()
-            # M = flow_sampling.median().detach()
-            # M = flow_sampling.mean().detach()
-            assert (flow_sampling >= 0 ).all()
-            sampling_norm = (( (flow_sampling/M) * (flow_sampling == flow_sampling.max()).float())**2).sum()
-            sampling_norm1 = (( (flow_sampling) * (flow_sampling == flow_sampling.max()).float())**2).sum()
-            
-            if min(flow_sampling.shape[-2:]) >= 256:
-                print(M)
-            flow_sampling = None
-            # this will populate the detached_flow grad
-            (1e1*sampling_norm).backward()
-            def add_flow_norm_grad(g,
-                # added_g=added_g
-                detached_flow = detached_flow
-                ):
-                # g = g + added_g#[...,::2,::2]
+        total_variance_loss = 0
+        if False:
+            # import pdb;pdb.set_trace()
+            total_variance_loss = 0
+            for j,f in enumerate(fake_flow):
+                fmean = f.mean(dim=(-1,-2),keepdim=True)
+                f = f - fmean
+                '''
+                cov = th.einsum('bcij,bdkl->bcd',f,f)
+                L = th.linalg.eigvals(cov)
+                # if j == 0:
+                #     import pdb;pdb.set_trace()
+                variance_loss = -1e-3*L.sum()
+                total_variance_loss = total_variance_loss + variance_loss
+                '''
+                assert f.shape[1] == 2
+                variance_loss = -1e-4 * f.std(dim=(0,-1,-2)).mean()
+                total_variance_loss = total_variance_loss + variance_loss
+                self.trends[f'sampling_norm_loss_{j}'].append(variance_loss.item())
+        if True and 'sampling norm':
+            from flow_utils import get_flow_sampling
+            # flow diversity loss
+            for j,(res_flow,res_img,res_patch_size) in enumerate(zip(fake_flow,real_batch[self.min_scale:],self.patch_sizes)):
+                flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True
+                # ,stride=1
+                )
                 
-                assert th.allclose(g,th.zeros_like(g))
-                # g = g + th.clip(detached_flow.grad,-10,10)
-                if min(g.shape[-2:]) >= 256:
+                # added_g = detached_flow.grad
+                # detached_flow = None
+                M = flow_sampling.max().detach()
+                sampling_norm = ((flow_sampling/M)**2).sum()
+                '''
+                # added_g = detached_flow.grad
+                # detached_flow = None
+                # sampling_norm = flow_sampling.norm()
+                M = flow_sampling.max().detach()
+                # M = flow_sampling.median().detach()
+                # M = flow_sampling.mean().detach()
+                assert (flow_sampling >= 0 ).all()
+                sampling_norm = (( (flow_sampling/M) * (flow_sampling == flow_sampling.max()).float())**2).sum()
+                sampling_norm1 = (( (flow_sampling) * (flow_sampling == flow_sampling.max()).float())**2).sum()
+                '''
+
+                if flow_sampling.shape[-2] == 256:
+                    import pdb;pdb.set_trace()
+                # sampling_norm = (flow_sampling).sum()
+                # sampling_norm = (flow_sampling*th.log(flow_sampling+1e-8)).sum()
+                flow_sampling = None
+                # this will populate the detached_flow grad
+                
+
+                (1e0*sampling_norm).backward()
+                D = res_img.shape[-2]
+                if False:
+                    self.create_grid([detached_flow.grad[:,:1,...]], [os.path.join(sample_dir1, f'{D}_x_{D}', f"grad_of_flow_" +
+                                    str(epoch) + "_" +
+                                    str(batch) + ".png")])        
+                def add_flow_norm_grad(g,
+                    # added_g=added_g
+                    detached_flow = detached_flow
+                    ):
+                    # g = g + added_g#[...,::2,::2]
                     # import pdb;pdb.set_trace()
-                    print(
-                        (detached_flow.grad).abs().max(),(detached_flow.grad).abs().mean()
-                    )
-                g = g + (detached_flow.grad)
-                # assert th.allclose(g,th.zeros_like(g))
-                # import pdb;pdb.set_trace()
-                return g
-            res_flow.register_hook(add_flow_norm_grad)
-            self.trends[f'sampling_norm_loss_{j}'].append(sampling_norm1.item())
-            fake_flow[j] = None
-        # print('early return from optimize_generator');return 0
+                    # g = g + th.clamp(detached_flow.grad,-1.,1.)
+                    g = g + (detached_flow.grad)
+                    return g
+                res_flow.register_hook(add_flow_norm_grad)
+                # self.trends[f'sampling_norm_loss_{j}'].append(th.log(sampling_norm).item())
+                self.trends[f'sampling_norm_loss_{j}'].append((sampling_norm).item())
+                fake_flow[j] = None
+            # print('early return from optimize_generator');return 0
         #=====================================================
-        (0*loss).backward();print('making gan grad 0')
+        print('not using gen loss')
+        (0*loss + 0*total_variance_loss).backward()
+        print('not stepping in gen')
+        # th.nn.utils.clip_grad_norm_(self.gen.parameters(), max_norm=.1, norm_type='inf')
+        # '''
+        pgrads = []
+        # V = 0.01
+        V = None
+        for p in gen_optim.param_groups[0]['params']:
+            if p.grad is not None:
+                if p.ndim == 4:
+                    # pgrads.append(p.grad.abs().max().item())
+                    pnorm = p.flatten(start_dim=1,end_dim=-1).norm(dim=-1,keepdim=True)[:,:,None,None]
+                    rel_p_grad = p.grad/pnorm
+                    if V is not None:
+                        rel_p_grad = th.clip(rel_p_grad,-V,V)
+                    # p.grad = rel_p_grad * pnorm
+                    p.grad.data.copy_(rel_p_grad * pnorm )
+                if p.ndim == 2:
+                    # pgrads.append(p.grad.abs().max().item())
+                    pnorm = p.norm(dim=(-1),keepdim=True)
+                    rel_p_grad = p.grad/pnorm
+                    if V is not None:
+                        rel_p_grad = th.clip(rel_p_grad,-V,V)
+                    p.grad.data.copy_(rel_p_grad * pnorm )
+        # print(max(pgrads))
+        # '''
+        # import pdb;pdb.set_trace()
+        
         gen_optim.step()
-        print(gen_optim.param_groups[0]['params'][0].grad.abs().mean())
+
         return loss.item()
 
     @staticmethod
@@ -493,7 +579,8 @@ class MSG_GAN:
         """
 
         from torch.nn.functional import avg_pool2d
-
+        global epoch,batch,sample_dir1
+        sample_dir1 = sample_dir
         # turn the generator and discriminator into train mode
         self.gen.train()
         for dis in self.dis_list:
@@ -508,11 +595,13 @@ class MSG_GAN:
 
         # create fixed_input for debugging
         fixed_input = th.randn(num_samples, self.latent_size,*self.latent_spatial).to(self.device)
-
+        print('setting fixed input to 0')
+        fixed_input = th.zeros_like(fixed_input)
         # create a global time counter
         global_time = time.time()
 
         for epoch in range(start, num_epochs + 1):
+            epoch = epoch
             start = timeit.default_timer()  # record time at the start of epoch
 
             print("\nEpoch: %d" % epoch)
@@ -531,9 +620,9 @@ class MSG_GAN:
             images = [images] + [avg_pool2d(images, int(np.power(2, i)))
                                     for i in range(1, self.depth)]
             images = list(reversed(images))
-            n_batches = 10;print(f'n_batches:{n_batches}')
+            n_batches = 10
             for i in range(n_batches):
-                
+                batch = i
                 # import pdb;pdb.set_trace()
                 '''
                 # extract current batch of data for training
@@ -547,6 +636,8 @@ class MSG_GAN:
                 '''
                 gan_input = th.randn(
                     extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
+                print('setting gan input to fixed_input')
+                gan_input =fixed_input
                 # gan_input = gan_input[...,None,None]
                 # optimize the discriminator:
                 if True:
@@ -559,6 +650,9 @@ class MSG_GAN:
                 # resample from the latent noise
                 gan_input = th.randn(
                     extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
+                print('setting gan input to fixed_input')
+                gan_input = fixed_input
+                
                 '''
                 gan_input = gan_input[...,None,None]
                 gan_input = th.zeros(gan_input.shape[:2] + (1,2)).to(gan_input.device); print('setting the shape of gan_input to ', gan_input.shape)
@@ -577,9 +671,9 @@ class MSG_GAN:
                 # provide a loss feedback
                 # import pdb;pdb.set_trace()
                 # if i % int(limit / feedback_factor) == 0 or i == 1:
-                if  i >n_batches:
+                if  i >100:
                     import pdb;pdb.set_trace()
-                if (i == n_batches) or (i == 1):
+                if (i == (n_batches - 1)) or (i == 1) or True:
                     elapsed = time.time() - global_time
                     elapsed = str(datetime.timedelta(seconds=elapsed))
                     print("Elapsed [%s] batch: %d  d_loss: %f  g_loss: %f"
@@ -656,4 +750,3 @@ class MSG_GAN:
         self.gen.eval()
         for dis in self.dis_list:
             dis.eval()
-
