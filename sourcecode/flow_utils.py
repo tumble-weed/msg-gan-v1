@@ -188,7 +188,7 @@ mode='standard'):
     patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
     '''
     if mode == 'custom':
-        from custom_grid_sample import bilinear_sampler
+        from custom_grid_sample2 import bilinear_sampler
         patches = bilinear_sampler(img,new_flow[...,0],new_flow[...,1])
         patches = patches.reshape(N,3,(fH),patch_size,(fW),patch_size)
     #============================================================
@@ -289,10 +289,13 @@ def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
     sampling = torch.autograd.grad(dummy_fake.sum(), [dummy_img], 
     #grad_outputs = grad_outputs, 
     create_graph=retain_graph)[0]
-
+    if not (sampling>=0.).all():
+        import pdb;pdb.set_trace()
+    '''
     try:    
         assert (sampling>=0.).all()
     except AssertionError as e:
         import pdb;pdb.set_trace()
+    '''
     # print('see maximum value of sampling');import pdb;pdb.set_trace()
     return sampling,flow2
