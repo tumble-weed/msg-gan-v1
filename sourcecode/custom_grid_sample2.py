@@ -1,5 +1,6 @@
 # modified from https://gist.github.com/peteflorence/a1da2c759ca1ac2b74af9a83f69ce20e
 import torch
+import torch.nn.functional as F
 import numpy as np
 '''
 def spatial_transformer_network(input_fmap, theta, out_dims=None, **kwargs):
@@ -191,6 +192,7 @@ def bilinear_sampler(img, x, y):
     torch.cuda.empty_cache()
     import gc;gc.collect()
     '''
+    device = img.device
     H,W = img.shape[-2:]
     max_y = int(H - 1)
     max_x = int(W - 1)
@@ -202,28 +204,45 @@ def bilinear_sampler(img, x, y):
     # print('check if this needs to be max_x - 1');import pdb;pdb.set_trace()
     x_pre = x
     y_pre = y
+    
     x = 0.5 * ((x + 1.0) * float(max_x))
     y = 0.5 * ((y + 1.0) * float(max_y))
 
+    span = 11
     new_x = x.long()
     new_y = y.long()
-    new_x = torch.clamp(new_x, None, max_x)
-    new_y = torch.clamp(new_y, None, max_y)
+    x = x + (span//2)
+    y = y + (span//2)
+    new_x = torch.clamp(new_x, None, max_x) + (span//2)
+    new_y = torch.clamp(new_y, None, max_y) + (span//2)
 
     # del_x = x - new_x 
     # del_y = y - new_y 
-    span = 3
-    X,Y = torch.meshgrid(torch.arange(-(span//2),1+(span//2)),
-                         torch.arange(-(span//2),1+(span//2)),
-                         'xy')
+    
+    X,Y = torch.meshgrid(torch.arange(-(span//2),1+(span//2),device=device),
+                         torch.arange(-(span//2),1+(span//2),device=device),
+                         indexing='xy')
     assert X.ndim == 2
     assert Y.ndim == 2
     Y = Y[None,None,None,None,...]
     X = X[None,None,None,None,...]
-    windows = img[:,:,new_y[...,None,None] + Y,new_x[...,None,None] + X]
+    
+    padded_img = torch.nn.functional.pad(img,((span//2),(span//2),(span//2),(span//2)),
+                                           mode='constant',value=1)
+                                        #   mode='reflect')
+    at_Y = new_y[...,None,None] + Y
+    at_X = new_x[...,None,None] + X
+    assert (at_Y >= 0).all()
+    assert (at_X >= 0).all()
+    windows = padded_img[:,:,
+                         at_Y,
+                         at_X]
+    # import pdb;pdb.set_trace()
     def gaussian_window(Y,X,cy,cx,sigma):
-        w = torch.exp( ((Y - cy)/sigma)**2 + ((X - cx)/sigma)**2 )
-        w = w/sum(dim=(-1,-2))
+        w = torch.exp( - ((Y - cy)/sigma)**2 - ((X - cx)/sigma)**2 )
+        # import pdb;pdb.set_trace()
+        w = w/w.sum(dim=(-1,-2),keepdim=True)
+        
         return w
     # grid_for_gauss = X.unsuqe
     # gaussian_window(Y,X,cy,cx,sigma)
@@ -231,7 +250,21 @@ def bilinear_sampler(img, x, y):
     # Y = Y[0,0]
     X = X + new_x[...,None,None].detach()
     Y = Y + new_y[...,None,None].detach()
-    weights = gaussian_window(Y,X,y[...,None,None],x[...,None,None],0.3)
+    weights = gaussian_window(Y,X,y[...,None,None],x[...,None,None],span/3)
+    out = combined = (weights * windows).sum(dim=(-1,-2))
+    assert out.shape[-2:] == x.shape[-2:]
+    '''
     to_fold = windows/weights
-    TODO:fold    
+    # TODO:fold
+
+
+    folded = F.fold(to_fold, output_size=x.shape[-2:], kernel_size=span, stride=1)
+    out = F.fold(torch.ones_like(to_fold), output_size=x.shape[-2:], kernel_size=span, stride=1)
+    print(f'folded shape = {folded.shape}')
+
+    print(f'out shape = {out.shape}')
+    '''
+    # import pdb;pdb.set_trace()
+    return out
+
 
