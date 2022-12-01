@@ -456,7 +456,8 @@ class MSG_GAN:
                 
                 # added_g = detached_flow.grad
                 # detached_flow = None
-                M = flow_sampling.max().detach()
+                # M = flow_sampling.max().detach()
+                M = 1
                 sampling_norm = ((flow_sampling/M)**2).sum()
                 '''
                 # added_g = detached_flow.grad
