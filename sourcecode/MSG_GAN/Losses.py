@@ -32,84 +32,84 @@ class GANLoss:
 
 
 class StandardGAN(GANLoss):
+    if False:
+        def __init__(self, dev, dis):
+            from torch.nn import BCEWithLogitsLoss
 
-    def __init__(self, dev, dis):
-        from torch.nn import BCEWithLogitsLoss
+            super().__init__(dev, dis)
 
-        super().__init__(dev, dis)
+            # define the criterion object
+            self.criterion = BCEWithLogitsLoss()
 
-        # define the criterion object
-        self.criterion = BCEWithLogitsLoss()
+        def dis_loss(self, real_samps, fake_samps):
+            # calculate the real loss:
+            real_loss = self.criterion(th.squeeze(self.dis(real_samps)),
+                                    th.ones(real_samps.shape[0]).to(self.device))
+            # calculate the fake loss:
+            fake_loss = self.criterion(th.squeeze(self.dis(fake_samps)),
+                                    th.zeros(fake_samps.shape[0]).to(self.device))
 
-    def dis_loss(self, real_samps, fake_samps):
-        # calculate the real loss:
-        real_loss = self.criterion(th.squeeze(self.dis(real_samps)),
-                                   th.ones(real_samps.shape[0]).to(self.device))
-        # calculate the fake loss:
-        fake_loss = self.criterion(th.squeeze(self.dis(fake_samps)),
-                                   th.zeros(fake_samps.shape[0]).to(self.device))
+            # return final loss as average of the two:
+            return (real_loss + fake_loss) / 2
 
-        # return final loss as average of the two:
-        return (real_loss + fake_loss) / 2
+        def gen_loss(self, _, fake_samps):
+            return self.criterion(th.squeeze(self.dis(fake_samps)),
+                                th.ones(fake_samps.shape[0]).to(self.device))
 
-    def gen_loss(self, _, fake_samps):
-        return self.criterion(th.squeeze(self.dis(fake_samps)),
-                              th.ones(fake_samps.shape[0]).to(self.device))
+        def conditional_dis_loss(self, real_samps, fake_samps, conditional_vectors):
+            # calculate the real loss:
+            real_loss = self.criterion(th.squeeze(self.dis(real_samps, conditional_vectors)),
+                                    th.ones(real_samps.shape[0]).to(self.device))
+            # calculate the fake loss:
+            fake_loss = self.criterion(th.squeeze(self.dis(fake_samps, conditional_vectors)),
+                                    th.zeros(fake_samps.shape[0]).to(self.device))
 
-    def conditional_dis_loss(self, real_samps, fake_samps, conditional_vectors):
-        # calculate the real loss:
-        real_loss = self.criterion(th.squeeze(self.dis(real_samps, conditional_vectors)),
-                                   th.ones(real_samps.shape[0]).to(self.device))
-        # calculate the fake loss:
-        fake_loss = self.criterion(th.squeeze(self.dis(fake_samps, conditional_vectors)),
-                                   th.zeros(fake_samps.shape[0]).to(self.device))
+            # return final loss as average of the two:
+            return (real_loss + fake_loss) / 2
 
-        # return final loss as average of the two:
-        return (real_loss + fake_loss) / 2
-
-    def conditional_gen_loss(self, real_samps, fake_samps, conditional_vectors):
-        return self.criterion(th.squeeze(self.dis(fake_samps, conditional_vectors)),
-                              th.ones(fake_samps.shape[0]).to(self.device))
+        def conditional_gen_loss(self, real_samps, fake_samps, conditional_vectors):
+            return self.criterion(th.squeeze(self.dis(fake_samps, conditional_vectors)),
+                                th.ones(fake_samps.shape[0]).to(self.device))
 
 
 class LSGAN(GANLoss):
+    if False:
+        def __init__(self, device, dis):
+            super().__init__(device, dis)
 
-    def __init__(self, device, dis):
-        super().__init__(device, dis)
+        def dis_loss(self, real_samps, fake_samps):
+            return 0.5 * (((th.mean(self.dis(real_samps)) - 1) ** 2)
+                        + (th.mean(self.dis(fake_samps))) ** 2)
 
-    def dis_loss(self, real_samps, fake_samps):
-        return 0.5 * (((th.mean(self.dis(real_samps)) - 1) ** 2)
-                      + (th.mean(self.dis(fake_samps))) ** 2)
+        def gen_loss(self, _, fake_samps):
+            return 0.5 * ((th.mean(self.dis(fake_samps)) - 1) ** 2)
 
-    def gen_loss(self, _, fake_samps):
-        return 0.5 * ((th.mean(self.dis(fake_samps)) - 1) ** 2)
+        def conditional_dis_loss(self, real_samps, fake_samps, conditional_vectors):
+            return 0.5 * (((th.mean(self.dis(real_samps, conditional_vectors)) - 1) ** 2)
+                        + (th.mean(self.dis(fake_samps, conditional_vectors))) ** 2)
 
-    def conditional_dis_loss(self, real_samps, fake_samps, conditional_vectors):
-        return 0.5 * (((th.mean(self.dis(real_samps, conditional_vectors)) - 1) ** 2)
-                      + (th.mean(self.dis(fake_samps, conditional_vectors))) ** 2)
-
-    def conditional_gen_loss(self, real_samps, fake_samps, conditional_vectors):
-        return 0.5 * ((th.mean(self.dis(fake_samps, conditional_vectors)) - 1) ** 2)
+        def conditional_gen_loss(self, real_samps, fake_samps, conditional_vectors):
+            return 0.5 * ((th.mean(self.dis(fake_samps, conditional_vectors)) - 1) ** 2)
 
 
 class HingeGAN(GANLoss):
+    if False:
+        def __init__(self, device, dis):
+            super().__init__(device, dis)
 
-    def __init__(self, device, dis):
-        super().__init__(device, dis)
+        def dis_loss(self, real_samps, fake_samps):
+            return (th.mean(th.nn.ReLU()(1 - self.dis(real_samps))) +
+                    th.mean(th.nn.ReLU()(1 + self.dis(fake_samps))))
 
-    def dis_loss(self, real_samps, fake_samps):
-        return (th.mean(th.nn.ReLU()(1 - self.dis(real_samps))) +
-                th.mean(th.nn.ReLU()(1 + self.dis(fake_samps))))
+        def gen_loss(self, real_samps, fake_samps):
+            return -th.mean(self.dis(fake_samps))
 
-    def gen_loss(self, real_samps, fake_samps):
-        return -th.mean(self.dis(fake_samps))
+        def conditional_dis_loss(self, real_samps, fake_samps, conditional_vectors):
+            return (th.mean(th.nn.ReLU()(1 - self.dis(real_samps, conditional_vectors))) +
+                    th.mean(th.nn.ReLU()(1 + self.dis(fake_samps, conditional_vectors))))
 
-    def conditional_dis_loss(self, real_samps, fake_samps, conditional_vectors):
-        return (th.mean(th.nn.ReLU()(1 - self.dis(real_samps, conditional_vectors))) +
-                th.mean(th.nn.ReLU()(1 + self.dis(fake_samps, conditional_vectors))))
-
-    def conditional_gen_loss(self, real_samps, fake_samps, conditional_vectors):
-        return -th.mean(self.dis(fake_samps, conditional_vectors))
+        def conditional_gen_loss(self, real_samps, fake_samps, conditional_vectors):
+            return -th.mean(self.dis(fake_samps, conditional_vectors))
 
 
 class RelativisticAverageHingeGAN(GANLoss):
@@ -123,6 +123,7 @@ class RelativisticAverageHingeGAN(GANLoss):
         assert len(real_samps) == len(fake_samps)
         for i,(fake_samp,real_samp,dis) in enumerate(zip(fake_samps,real_samps,self.dis_list)):
             # difference between real and fake:
+            
             r_f_diff = dis(real_samp) - th.mean(dis(fake_samp))
 
             # difference between fake and real samples

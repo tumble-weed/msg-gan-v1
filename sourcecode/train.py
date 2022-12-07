@@ -1,4 +1,16 @@
 """ script for training the MSG-GAN on given dataset """
+# '''
+import builtins
+original_import = builtins.__import__
+def custom_import(*args, **kw):
+    module = original_import(*args, **kw)
+    if (module.__name__.endswith("GAN") and not module.__name__.endswith('MSG_GAN') 
+        and not getattr(module, "patch_is_performed", False)):
+        import MSG_GAN.GAN_scalenoise as module
+        module.patch_is_performed = True
+    return module
+builtins.__import__ = custom_import
+# '''
 
 import argparse
 
@@ -85,7 +97,7 @@ def parse_arguments():
                         help="starting epoch number")
 
     parser.add_argument("--num_epochs", action="store", type=int,
-                        default=12,
+                        default=50,
                         help="number of epochs for training")
 
     parser.add_argument("--feedback_factor", action="store", type=int,
@@ -110,11 +122,13 @@ def parse_arguments():
                         help="save model per n epochs")
 
     parser.add_argument("--g_lr", action="store", type=float,
+                        # default=0.0001*0.3*1,
                         default=0.0001,
                         help="learning rate for generator")
 
     parser.add_argument("--d_lr", action="store", type=float,
-                        default=0.0004,
+                        # default=0.0001 * 0.1*0.1,
+                        default=0.0001,
                         help="learning rate for discriminator")
 
     parser.add_argument("--adam_beta1", action="store", type=float,
@@ -184,6 +198,18 @@ def main(args):
         
         data = DummyDataLoader(ref,100)
         latent_spatial = data.ref.shape[-2]//64 -3,data.ref.shape[-1]//64 -3
+        latent_spatials = \
+        [
+            (1,64,data.ref.shape[-2]//64 -3,data.ref.shape[-1]//64 -3),
+            (1,64,data.ref.shape[-2]//64,data.ref.shape[-1]//64 ),
+            (1,64,data.ref.shape[-2]//32,data.ref.shape[-1]//32),
+            (1,64,data.ref.shape[-2]//16,data.ref.shape[-1]//16),
+            (1,64,data.ref.shape[-2]//8,data.ref.shape[-1]//8),
+            (1,32,data.ref.shape[-2]//4,data.ref.shape[-1]//4),
+            (1,16,data.ref.shape[-2]//2,data.ref.shape[-1]//2),
+        ]
+        #NOTE: will be reversed by the GAN
+        latent_spatials = latent_spatials[::-1] 
         # data.ref = th.zeros_like(data.ref); data.ref[...,::2] = 1;print('setting image to stripes')
         # print("Total number of images in the dataset:", len(dataset))
     if 'dataset' and False:
@@ -211,6 +237,7 @@ def main(args):
                       patch_size = args.patch_size,
                       stride = args.stride)
     msg_gan.latent_spatial = latent_spatial
+    msg_gan.gen.latent_spatials = msg_gan.latent_spatials = latent_spatials
     if args.generator_file is not None:
         # load the weights into generator
         print('unexpected: load file');import pdb;pdb.set_trace()

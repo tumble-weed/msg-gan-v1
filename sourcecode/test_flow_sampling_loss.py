@@ -7,8 +7,8 @@ tensor_to_numpy = lambda t:t.detach().cpu().numpy()
 
 #%%
 device = 'cuda'
-flow_shape = (100,100)
-x = (0.01*torch.randn(1,2,*flow_shape)).to(device).requires_grad_(True)
+flow_shape = (1,1)
+x = (0.0*torch.randn(1,2,*flow_shape)).to(device).requires_grad_(True)
 # x = (-1000*torch.ones(1,2,*flow_shape)).to(device).requires_grad_(True)
 # x = (0.1*torch.stack(
 #     torch.meshgrid(
@@ -20,8 +20,8 @@ x = (0.01*torch.randn(1,2,*flow_shape)).to(device).requires_grad_(True)
 flow = torch.tanh(x)
 # x.data.copy_(torch.clamp(x,-1,1))
 # flow = x
-dummy_img = torch.randn(1,3,100,100).to(device)
-optim_x = torch.optim.Adam([x],lr=1e-1)
+dummy_img = torch.randn(1,3,101,101).to(device)
+optim_x = torch.optim.Adam([x],lr=1e-2)
 res_patch_size = 33
 from collections import defaultdict
 trends = defaultdict(list)
@@ -33,6 +33,7 @@ for i in range(100):
     flow_sampling,detached_flow  = get_flow_sampling(flow,dummy_img,res_patch_size,retain_graph = True
                 # ,stride=1
                 )
+    flow_sampling.retain_grad()
     # print(flow_sampling.abs().sum())
     # print((flow_sampling!=0).sum())
     assert (flow_sampling >=0).all()
@@ -70,15 +71,23 @@ for i in range(100):
             plt.imshow(tensor_to_numpy((flow_sampling[0,1]).float()),vmin=0)
             plt.colorbar()
             plt.show()
-        if True:
+        if False:
             plt.figure()
             plt.imshow(tensor_to_numpy(flow[0,0]),vmin=-1)
             plt.show()
         if True:
             plt.figure()
+            plt.imshow(tensor_to_numpy((flow_sampling).grad[0,1]),vmin=0)
+            plt.colorbar()
+            plt.title('flow_sampling grad')
+            plt.show()
+            
+            
+        if True:
+            plt.figure()
             plt.plot(trends['sampling_norm'])
             plt.show()
-        if True:
+        if False:
             plt.figure()
             plt.plot(trends['max_flow_sampling'])
             plt.show()        

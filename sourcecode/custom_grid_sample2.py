@@ -208,9 +208,11 @@ def bilinear_sampler(img, x, y):
     x = 0.5 * ((x + 1.0) * float(max_x))
     y = 0.5 * ((y + 1.0) * float(max_y))
 
-    span = 11
+    D = min(H,W)
+    span = (D//8)
     new_x = x.long()
     new_y = y.long()
+        
     x = x + (span//2)
     y = y + (span//2)
     new_x = torch.clamp(new_x, None, max_x) + (span//2)
@@ -228,8 +230,8 @@ def bilinear_sampler(img, x, y):
     X = X[None,None,None,None,...]
     
     padded_img = torch.nn.functional.pad(img,((span//2),(span//2),(span//2),(span//2)),
-                                           mode='constant',value=1)
-                                        #   mode='reflect')
+                                          #  mode='constant',value=1)
+                                          mode='reflect')
     at_Y = new_y[...,None,None] + Y
     at_X = new_x[...,None,None] + X
     assert (at_Y >= 0).all()
@@ -242,15 +244,16 @@ def bilinear_sampler(img, x, y):
         w = torch.exp( - ((Y - cy)/sigma)**2 - ((X - cx)/sigma)**2 )
         # import pdb;pdb.set_trace()
         w = w/w.sum(dim=(-1,-2),keepdim=True)
-        
         return w
     # grid_for_gauss = X.unsuqe
     # gaussian_window(Y,X,cy,cx,sigma)
     # X = X[0,0]
     # Y = Y[0,0]
+    '''
     X = X + new_x[...,None,None].detach()
     Y = Y + new_y[...,None,None].detach()
-    weights = gaussian_window(Y,X,y[...,None,None],x[...,None,None],span/3)
+    '''
+    weights = gaussian_window(at_Y,at_X,y[...,None,None],x[...,None,None],span/3)
     out = combined = (weights * windows).sum(dim=(-1,-2))
     assert out.shape[-2:] == x.shape[-2:]
     '''

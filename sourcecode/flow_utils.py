@@ -201,7 +201,7 @@ mode='standard'):
         import pdb;pdb.set_trace()    
     '''
     return patches
-def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
+def flow_to_rgb(flow,patch_size,stride,img,out_img_shape,mode='standard'):
     # print('early return from flow_to_rgb');return flow
     # patch_size = 1;print('setting patch size to 1')
     if 'heterogenous for even and odd' and True:
@@ -221,7 +221,7 @@ def flow_to_rgb(flow,patch_size,stride,img,mode='standard'):
         flow = flow[:,:,patch_size//2:-(patch_size//2),patch_size//2:-(patch_size//2)]
     # if stride !=  1:
         # import pdb;pdb.set_trace()
-    out_img_shape = (1,3) + flow.shape[-2:]
+    # out_img_shape = (1,3) + flow.shape[-2:]
     flow = flow[...,::stride,::stride]
 
     if False:
@@ -279,7 +279,7 @@ def get_flow_sampling(flow,img,patch_size,retain_graph = True,stride=2):
     flow2.requires_grad_(True)
     dummy_img = torch.ones_like(img)
     dummy_img.requires_grad_(True)
-    dummy_fake = flow_to_rgb(flow2,patch_size,stride,dummy_img,mode='custom')
+    dummy_fake = flow_to_rgb(flow2,patch_size,stride,dummy_img,(1,3)+flow.shape[-2:],mode='custom')
     '''
     if False:
         # https://lucainiaoge.github.io/download/PyTorch-create_graph-is-true_Tutorial_and_Example.pdf

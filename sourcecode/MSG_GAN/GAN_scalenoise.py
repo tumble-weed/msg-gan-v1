@@ -127,7 +127,7 @@ class Generator(th.nn.Module):
         # toggle the state variable:
         self.spectral_norm_mode = False
 
-    def forward(self, x):
+    def forward(self, xlist):
         """
         forward pass of the Generator
         :param x: input noise
@@ -135,13 +135,15 @@ class Generator(th.nn.Module):
         """
         from torch import tanh
         outputs = []  # initialize to empty list
-
-        y = x  # start the computational pipeline
+        xlist = xlist[::-1]
+        y = xlist[0]  # start the computational pipeline
         for j,(block, converter) in enumerate(zip(self.layers, self.flow_converters)):
+            if j > 0:
+                assert y.shape == xlist[j].shape
+                y = y + 0.01*xlist[j]
             # import pdb;pdb.set_trace()
-            assert y.shape[-2:] == self.latent_spatials[::-1][j][-2:]
             y = block(y)
-            
+
             flow = tanh(converter(y))
             # if  j == 0:
             #     import pdb;pdb.set_trace()            
@@ -393,7 +395,7 @@ class MSG_GAN:
         return generated_images
     '''
 
-    def optimize_discriminator(self, dis_optim, noise, real_batch, loss_fn):
+    def optimize_discriminator(self, dis_optim, noise_list, real_batch, loss_fn):
         """
         performs one step of weight update on discriminator using the batch of data
         :param dis_optim: discriminator optimizer
@@ -405,7 +407,7 @@ class MSG_GAN:
         """
 
         # generate a batch of samples
-        fake_flow = self.gen(noise)
+        fake_flow = self.gen(noise_list)
         
         fake_samples = [flow_to_rgb(flow,ps,self.stride,
         F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True),(1,3)+flow.shape[-2:]) for flow,ps in zip(fake_flow,self.patch_sizes)]
@@ -423,7 +425,7 @@ class MSG_GAN:
             dis_optim.step()
         return loss.item()
 
-    def optimize_generator(self, gen_optim, noise, real_batch, loss_fn):
+    def optimize_generator(self, gen_optim, noise_list, real_batch, loss_fn):
         """
         performs one step of weight update on generator using the batch of data
         :param gen_optim: generator optimizer
@@ -438,7 +440,7 @@ class MSG_GAN:
         # print('setting noise to 0');noise = th.zeros_like(noise)
         # generate a batch of samples
         # with th.no_grad():
-        fake_flow = self.gen(noise)
+        fake_flow = self.gen(noise_list)
         fake_samples = [flow_to_rgb(flow,ps,self.stride,F.interpolate(self.ref,flow.shape[-2:],mode='bilinear',align_corners=True),(1,3)+flow.shape[-2:]) for flow,ps in zip(fake_flow,self.patch_sizes)]
         
         assert len(real_batch[self.min_scale:]) == len(fake_samples)
@@ -470,8 +472,10 @@ class MSG_GAN:
             # flow diversity loss
             tv_loss = 0
             for j,(res_flow,res_img,res_patch_size) in enumerate(zip(fake_flow,real_batch[self.min_scale:],self.patch_sizes)):
-                if j < len(fake_flow) -1:
-                    continue
+                sampling_loss_factor = 1
+                # if j < len(fake_flow) -1:
+                #     sampling_loss_factor = 4
+                #     continue
                 flow_sampling,detached_flow = get_flow_sampling(res_flow,res_img,res_patch_size,retain_graph = True
                 # ,stride=1
                 )
@@ -511,7 +515,7 @@ class MSG_GAN:
                 # this will populate the detached_flow grad
                 
 
-                (4*1e0*sampling_norm).backward()
+                (sampling_loss_factor*1e-1*sampling_norm).backward()
                 D = res_img.shape[-2]
                 if False:
                     self.create_grid([detached_flow.grad[:,:1,...]], [os.path.join(sample_dir1, f'{D}_x_{D}', f"grad_of_flow_" +
@@ -537,7 +541,7 @@ class MSG_GAN:
             # print('early return from optimize_generator');return 0
         #=====================================================
         print('not using gen loss')
-        (1*loss + 0*total_variance_loss + 0*tv_loss).backward()
+        (1e-1*loss + 0*total_variance_loss + 0*tv_loss).backward()
         # print('not stepping in gen')
         # th.nn.utils.clip_grad_norm_(self.gen.parameters(), max_norm=.1, norm_type='inf')
         '''
@@ -631,7 +635,11 @@ class MSG_GAN:
         print("Starting the training process ... ")
 
         # create fixed_input for debugging
-        fixed_input = th.randn(num_samples, self.latent_size,*self.latent_spatial).to(self.device)
+        # fixed_input = th.randn(num_samples, self.latent_size,*self.latent_spatial).to(self.device)
+        fixed_input = [
+                    th.randn(
+                    num_samples,*s[1:]).to(self.device) for s in self.latent_spatials[::-1]
+                    ][::-1]
         if False:
             print('setting fixed input to 0')
             fixed_input = th.zeros_like(fixed_input)
@@ -672,8 +680,23 @@ class MSG_GAN:
                                      for i in range(1, self.depth)]
                 images = list(reversed(images))
                 '''
-                gan_input = th.randn(
-                    extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
+                
+
+                gan_input = [
+                    th.randn(
+                    extracted_batch_size,*s[1:]).to(self.device) for s in self.latent_spatials[::-1]
+                    ][::-1]
+                '''
+                torch.Size([1, 64, 1, 4])
+                torch.Size([1, 64, 4, 7])
+                torch.Size([1, 64, 8, 14])
+                torch.Size([1, 64, 16, 28])
+                torch.Size([1, 64, 32, 56])
+                torch.Size([1, 32, 64, 112])
+                torch.Size([1, 16, 128, 224])
+                '''
+                
+
                 if False:
                     print('setting gan input to fixed_input')
                     gan_input =fixed_input
@@ -687,8 +710,10 @@ class MSG_GAN:
                 # print('early return from train loop');continue
                 # optimize the generator:
                 # resample from the latent noise
-                gan_input = th.randn(
-                    extracted_batch_size, self.latent_size,*self.latent_spatial).to(self.device)
+                gan_input = [
+                    th.randn(
+                    extracted_batch_size,*s[1:]).to(self.device) for s in self.latent_spatials[::-1]
+                    ][::-1]
                 if False:
                     print('setting gan input to fixed_input')
                     gan_input = fixed_input
