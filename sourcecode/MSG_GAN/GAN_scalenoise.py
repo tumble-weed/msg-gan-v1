@@ -167,7 +167,7 @@ class Generator(th.nn.Module):
                 
         # print('see effect of gan input shape');import pdb;pdb.set_trace()
         # return outputs[self.min_scale:]
-        return multilevel_flow(outputs[self.min_scale:])
+        return multilevel_flow(outputs[self.min_scale:],detach=True)
 
 '''
 class Discriminator(th.nn.Module):
@@ -513,9 +513,15 @@ class MSG_GAN:
                 # sampling_norm = (flow_sampling*th.log(flow_sampling+1e-8)).sum()
                 flow_sampling = None
                 # this will populate the detached_flow grad
-                
-
-                (sampling_loss_factor*1e-1*sampling_norm).backward()
+                '''
+                global counter
+                if 'counter' not in globals():
+                    counter = 1
+                max_iters = 5000
+                sampling_loss_weight = (1e0 - 1e-1) * float((counter<(max_iters//5))) + 1e-1
+                '''
+                sampling_loss_weight = 1
+                (sampling_loss_factor*sampling_loss_weight*sampling_norm).backward()
                 D = res_img.shape[-2]
                 if False:
                     self.create_grid([detached_flow.grad[:,:1,...]], [os.path.join(sample_dir1, f'{D}_x_{D}', f"grad_of_flow_" +
@@ -540,7 +546,7 @@ class MSG_GAN:
                 fake_flow[j] = None
             # print('early return from optimize_generator');return 0
         #=====================================================
-        print('not using gen loss')
+        # print('not using gen loss')
         (1e-1*loss + 0*total_variance_loss + 0*tv_loss).backward()
         # print('not stepping in gen')
         # th.nn.utils.clip_grad_norm_(self.gen.parameters(), max_norm=.1, norm_type='inf')
